@@ -4,23 +4,28 @@ import { spawn } from 'child_process'
 import getopts from 'getopts'
 
 (async () => {
-  const bajelfile = await import(`${process.cwd()}/bajelfile.js`)
+  const bajelfile = (await import(`${process.cwd()}/bajelfile.js`)).default
 
   const options = getopts(process.argv.slice(2), {
-    boolean: ['n'],
+    boolean: ['n', 'p'],
     alias: {
       n: ['just-print', 'dry-run', 'recon'],
       stopEarly: true
     }
   })
   if (options.help) {
-    console.log('usage: bajel [-n] [target]')
+    console.log('usage: bajel [-n] [-p] [target]')
     process.exit(0)
   }
   const dryRun = options.n
   const start = options._.length > 0
     ? options._[0]
     : Object.keys(bajelfile)[0]
+
+  if (options.p) {
+    console.log(Object.keys(bajelfile))
+    process.exit(0)
+  }
 
   const timestamp = path =>
     fs.promises.stat(path)

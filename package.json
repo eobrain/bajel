@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "A build system modelled on make.",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "ava"
   },
@@ -18,5 +19,14 @@
   "bugs": {
     "url": "https://github.com/eobrain/bajel/issues"
   },
-  "homepage": "https://github.com/eobrain/bajel#readme"
+  "homepage": "https://github.com/eobrain/bajel#readme",
+  "dependencies": {
+    "getopts": "^2.2.5",
+    "install": "^0.13.0",
+    "remove": "^0.1.5",
+    "standard": "^14.3.1"
+  },
+  "devDependencies": {
+    "ava": "^3.4.0"
+  }
 }
