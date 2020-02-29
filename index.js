@@ -104,7 +104,7 @@ module.exports = bajelfile => {
         const source = deps.length > 0 ? deps[0] : '***no-source***'
         const success = await printAndExec(exec({ source, target }))
         if (!success) {
-          console.error('FAILED', task)
+          console.error('FAILED  ', target, ':', deps.join(' '))
           return [success]
         }
       }
