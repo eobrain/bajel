@@ -3,7 +3,6 @@
   "version": "0.0.1",
   "description": "A build system modelled on make.",
   "main": "index.js",
-  "type": "module",
   "scripts": {
     "test": "ava"
   },

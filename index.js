@@ -1,12 +1,10 @@
-import fs from 'fs'
-import path from 'path'
-import { spawn } from 'child_process'
-import getopts from 'getopts'
-import assert from 'assert';
+const fs = require('fs')
+const path = require('path')
+const { spawn } = require('child_process')
+const getopts = require('getopts')
+const assert = require('assert')
 
-(async () => {
-  const bajelfile = (await import(`${process.cwd()}/bajelfile.js`)).default
-
+module.exports = bajelfile => {
   const options = getopts(process.argv.slice(2), {
     boolean: ['n', 'p'],
     alias: {
@@ -208,4 +206,4 @@ import assert from 'assert';
   }
 
   main()
-})()
+}
