@@ -2,6 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import { spawn } from 'child_process'
 import getopts from 'getopts'
+import assert from 'assert';
 
 (async () => {
   const bajelfile = (await import(`${process.cwd()}/bajelfile.js`)).default
@@ -82,12 +83,14 @@ import getopts from 'getopts'
  * */
   const recurse = async target => {
     const targetTime = await timestamp(target)
-    const task = bajelfile[target] || {}
-    if (!task.exec && !task.deps && targetTime === 0) {
+    const task = bajelfile[target] || []
+    const deps = strings(task)
+    const execs = functions(task)
+    assert.strictEqual(deps.length + execs.length, task.length)
+    if (task.length === 0 && targetTime === 0) {
       console.warn(`No target "${target}"`)
       return [false]
     }
-    const deps = task.deps || []
     let lastDepsTime = 0
     for (let i = 0; i < deps.length; ++i) {
       const [depSuccess, depTime] = await recurse(deps[i])
@@ -98,10 +101,10 @@ import getopts from 'getopts'
         lastDepsTime = depTime
       }
     }
-    if (task.exec) {
+    for (const exec of execs) {
       if (targetTime === 0 || targetTime < lastDepsTime) {
         const source = deps.length > 0 ? deps[0] : '***no-source***'
-        const success = await printAndExec(task.exec({ source, target }))
+        const success = await printAndExec(exec({ source, target }))
         if (!success) {
           console.error('FAILED', task)
           return [success]
@@ -124,6 +127,22 @@ import getopts from 'getopts'
     })
   }
 
+  // const trace = x => console.trace(x) || x
+
+  const regex = task => {
+    const regexs = task.filter(x => typeof x === 'object')
+    switch (regexs.length) {
+      case 0:
+        return undefined
+      case 1:
+        return regexs[0]
+      default:
+        throw new Error(`More than one regex argument: ${regexs}`)
+    }
+  }
+  const strings = task => task.filter(x => typeof x === 'string')
+  const functions = task => task.filter(x => typeof x === 'function')
+
   const expandDeps = () => {
     const files = []
     walkDir('.', f => { files.push(f) })
@@ -132,26 +151,29 @@ import getopts from 'getopts'
     let expansionHappened = false
     for (const target in bajelfile) {
       const task = bajelfile[target]
-      if (!task.from) {
+      const from = regex(task)
+      if (!from) {
         continue
       }
-      const deps = task.deps || []
+      const deps = strings(task)
+      const execs = functions(task)
       let matchHappened
       for (const file of [...files, ...Object.keys(bajelfile)]) {
-        const match = file.match(task.from)
+        const match = file.match(from)
         if (match) {
           const group = match[1]
           const expand = s => s.split('$1').join(group)
           matchHappened = expansionHappened = true
           toRemove.push(target)
-          toAdd[expand(target)] = {
-            deps: [file, ...deps.map(expand)],
-            exec: c => expand(task.exec(c))
-          }
+          toAdd[expand(target)] = [
+            file,
+            ...deps.map(expand),
+            ...execs.map(exec => c => expand(exec(c)))
+          ]
         }
       }
       if (!matchHappened) {
-        console.warn(`No match for  ${target}: ${task.from}`)
+        console.warn(`No match for  ${target}: ${from}`)
       }
     }
     toRemove.forEach(target => { delete bajelfile[target] })
