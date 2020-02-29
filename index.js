@@ -4,7 +4,9 @@ const { spawn } = require('child_process')
 const getopts = require('getopts')
 const assert = require('assert')
 
-module.exports = bajelfile => {
+const trace = x => console.trace(x) || x
+
+module.exports = async bajelfile => {
   const options = getopts(process.argv.slice(2), {
     boolean: ['n', 'p'],
     alias: {
@@ -14,7 +16,7 @@ module.exports = bajelfile => {
   })
   if (options.help) {
     console.log('usage: bajel [-n] [-p] [target]')
-    process.exit(0)
+    return true
   }
   const dryRun = options.n
   const start = options._.length > 0
@@ -23,7 +25,7 @@ module.exports = bajelfile => {
 
   if (options.p) {
     console.log(Object.keys(bajelfile))
-    process.exit(0)
+    return true
   }
 
   const timestamp = path =>
@@ -80,6 +82,7 @@ module.exports = bajelfile => {
  * @returns {[succeeded, number]} whether succeeded and timestamp in ms of latest file change
  * */
   const recurse = async target => {
+    // console.log('target=', target, 'deps=', deps)
     const targetTime = await timestamp(target)
     const task = bajelfile[target] || []
     const deps = strings(task)
@@ -124,8 +127,6 @@ module.exports = bajelfile => {
       }
     })
   }
-
-  // const trace = x => console.trace(x) || x
 
   const regex = task => {
     const regexs = task.filter(x => typeof x === 'object')
@@ -186,24 +187,20 @@ module.exports = bajelfile => {
     return expansionHappened
   }
 
-  const main = async () => {
-    while (expandDeps()) {}
-    const [success, timestamp] = await recurse(start)
+  while (expandDeps()) {}
+  const [success, ts] = await recurse(start)
 
-    if (!success) {
-      console.error('Execution failed.')
-      process.exit(1)
-    }
-    if (dryRun) {
-      console.log('Dry run finished.')
-      process.exit(0)
-    }
-    console.log('Execution succeeded.')
-    if (timestamp) {
-      console.log('Latest file modified ', ago(timestamp))
-    }
-    process.exit(0)
+  if (!success) {
+    console.error('Execution failed.')
+    return false
   }
-
-  main()
+  if (dryRun) {
+    console.log('Dry run finished.')
+    return true
+  }
+  console.log('Execution succeeded.')
+  if (ts) {
+    console.log('Latest file modified ', ago(ts))
+  }
+  return true
 }
