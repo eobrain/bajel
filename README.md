@@ -12,4 +12,4 @@ http://www.eclipse.org/legal/epl-v10.html
 
 > This is a purely personal project, not a project of my employer.
 
-[1]: Navío_santa_ana_de_112_cañones.jpg
+[1]: bajel.jpg
