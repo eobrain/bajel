@@ -1,4 +1,4 @@
-const { rm } = require('nodejs-sh')
+const { rm, touch } = require('nodejs-sh')
 const fs = require('fs')
 const test = require('ava')
 
@@ -115,6 +115,23 @@ test.serial('Up to date', async t => {
 
   t.deepEqual(fakeStdout.toString(),
     'Up to date.\n')
+  t.deepEqual(fakeStderr.toString(), '')
+  t.true(success)
+  t.true(fs.existsSync('hellomake'))
+})
+
+test.serial('One file updated', async t => {
+  const fakeStdout = StreamToString()
+  const fakeStderr = StreamToString()
+
+  await build(bajelfile)
+  touch('hellomake.c')
+  const success = await build(bajelfile, fakeStdout.stream, fakeStderr.stream)
+
+  t.deepEqual(fakeStdout.toString(),
+    'gcc -c -o hellomake.o hellomake.c -I.\n' +
+    'gcc -o hellomake hellomake.o hellofunc.o -I.\n' +
+    'Execution succeeded.\n')
   t.deepEqual(fakeStderr.toString(), '')
   t.true(success)
   t.true(fs.existsSync('hellomake'))
