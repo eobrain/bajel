@@ -1,10 +1,7 @@
 const { rm, touch } = require('nodejs-sh')
 const fs = require('fs')
 const test = require('ava')
-
-// const proxyquire = require('proxyquire')
 const build = require('../../index.js')
-
 const { Writable } = require('stream')
 
 const StreamToString = () => {
@@ -18,12 +15,7 @@ const StreamToString = () => {
   return { stream, toString }
 }
 
-// const fakeChildProcess = {
-//  spawn: cmd => { console.log('spawn', cmd) }
-// }
-
-// const build = proxyquire('./index', { child_process: fakeChildProcess })
-
+// Based on Makefile examples in
 // http://www.cs.colby.edu/maxwell/courses/tutorials/maketutor/
 
 test.beforeEach('initialize directort', async () => {
