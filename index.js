@@ -170,7 +170,13 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
         const match = file.match(from)
         if (match) {
           const group = match[1]
-          const expand = s => s.split('$1').join(group)
+          const expand = s => {
+            if ((typeof s) !== 'string') {
+              throw new Error(
+                `In target "${target}:" with regexp, expected string but got ${typeof s} (${s})`)
+            }
+            return s.split('$1').join(group)
+          }
           matchHappened = expansionHappened = true
           toRemove.push(target)
           toAdd[expand(target)] = [
@@ -198,17 +204,22 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
 
   while (expandDeps()) {}
   const t0 = Date.now()
-  const [success, ts] = await recurse(start)
-  const updated = (ts > t0)
+  try {
+    const [success, ts] = await recurse(start)
+    const updated = (ts > t0)
 
-  if (!success) {
-    theConsole.error('Execution failed.')
+    if (!success) {
+      theConsole.error('Execution failed.')
+      return false
+    }
+    if (dryRun) {
+      theConsole.log('Dry run finished.')
+      return true
+    }
+    theConsole.log(updated ? 'Execution succeeded.' : 'Up to date.')
+    return true
+  } catch (e) {
+    theConsole.error(e.toString())
     return false
   }
-  if (dryRun) {
-    theConsole.log('Dry run finished.')
-    return true
-  }
-  theConsole.log(updated ? 'Execution succeeded.' : 'Up to date.')
-  return true
 }
