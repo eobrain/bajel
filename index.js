@@ -4,6 +4,7 @@ const { spawn } = require('child_process')
 const getopts = require('getopts')
 const assert = require('assert')
 const { Console } = require('console')
+const Percent = require('./percent.js')
 
 // const trace = x => console.trace(x) || x
 
@@ -21,7 +22,7 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
     return true
   }
 
-  const explicitTargets = Object.keys(bajelfile).filter(k => !k.includes('$1'))
+  const explicitTargets = Object.keys(bajelfile).filter(k => !k.includes('%'))
   if (explicitTargets.length === 0) {
     theConsole.error(`No explicit targets in ${Object.keys(bajelfile)}`)
     return false
@@ -137,17 +138,6 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
     })
   }
 
-  const regex = task => {
-    const regexs = task.filter(x => typeof x === 'object')
-    switch (regexs.length) {
-      case 0:
-        return undefined
-      case 1:
-        return regexs[0]
-      default:
-        throw new Error(`More than one regex argument: ${regexs}`)
-    }
-  }
   const strings = task => task.filter(x => typeof x === 'string')
   const functions = task => task.filter(x => typeof x === 'function')
 
@@ -159,7 +149,16 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
     let expansionHappened = false
     for (const target in bajelfile) {
       const task = bajelfile[target]
-      const from = regex(task)
+      let from
+      for (let i = 0; i < task.length; ++i) {
+        if (typeof task[i] === 'string') {
+          from = Percent(task[i])
+          if (from) {
+            task[i] = from
+            break
+          }
+        }
+      }
       if (!from) {
         continue
       }
@@ -167,15 +166,14 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
       const execs = functions(task)
       let matchHappened
       for (const file of [...files, ...Object.keys(bajelfile)]) {
-        const match = file.match(from)
+        const match = from.match(file)
         if (match) {
-          const group = match[1]
           const expand = s => {
             if ((typeof s) !== 'string') {
               throw new Error(
-                `In target "${target}:" with regexp, expected string but got ${typeof s} (${s})`)
+                `In target "${target}:" with percent patterns, expected string but got ${typeof s} (${s})`)
             }
-            return s.split('$1').join(group)
+            return s.split('%').join(match)
           }
           matchHappened = expansionHappened = true
           toRemove.push(target)
@@ -203,6 +201,7 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
   }
 
   while (expandDeps()) {}
+
   const t0 = Date.now()
   try {
     const [success, ts] = await recurse(start)

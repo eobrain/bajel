@@ -52,21 +52,20 @@ test.serial('Colby2', async t => {
   const CFLAGS = '-I.'
   const success = await build(
     {
-      '$1.o': [/(.*)\.c/,
-        c => `${CC} -c -o ${c.target} ${c.source} ${CFLAGS}`],
+      '%.o': ['%.c',
+        c => `${CC} -c -o %.o %.c ${CFLAGS}`],
       hellomake: ['hellomake.o', 'hellofunc.o',
         c => `${CC} -o hellomake hellomake.o hellofunc.o`]
     },
     fakeStdout.stream, fakeStderr.stream)
 
-  t.true(success)
-  t.true(fs.existsSync('hellomake'))
-  t.deepEqual(fakeStderr.toString(), '')
-  t.deepEqual(fakeStdout.toString(),
+  t.deepEqual(fakeStdout.toString() + fakeStderr.toString(),
     'gcc -c -o hellomake.o hellomake.c -I.\n' +
   'gcc -c -o hellofunc.o hellofunc.c -I.\n' +
   'gcc -o hellomake hellomake.o hellofunc.o\n' +
   'Execution succeeded.\n')
+  t.true(success)
+  t.true(fs.existsSync('hellomake'))
 })
 
 const CC = 'gcc'
@@ -75,8 +74,8 @@ const DEPS = ['hellomake.h']
 const OBJ = ['hellomake.o', 'hellofunc.o']
 const bajelfile = {
 
-  '$1.o': [/(.*)\.c/, ...DEPS,
-    c => `${CC} -c -o ${c.target} ${c.source} ${CFLAGS}`],
+  '%.o': ['%.c', ...DEPS,
+    c => `${CC} -c -o %.o %.c ${CFLAGS}`],
 
   hellomake: [...OBJ,
     c => `${CC} -o ${c.target} ${c.sources} ${CFLAGS}`]
