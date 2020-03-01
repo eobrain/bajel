@@ -3,10 +3,12 @@ const path = require('path')
 const { spawn } = require('child_process')
 const getopts = require('getopts')
 const assert = require('assert')
+const { Console } = require('console')
 
-const trace = x => console.trace(x) || x
+// const trace = x => console.trace(x) || x
 
-module.exports = async bajelfile => {
+module.exports = async (bajelfile, stdout = process.stdout, stderr = process.stderr) => {
+  const theConsole = new Console(stdout, stderr)
   const options = getopts(process.argv.slice(2), {
     boolean: ['n', 'p'],
     alias: {
@@ -15,16 +17,23 @@ module.exports = async bajelfile => {
     }
   })
   if (options.help) {
-    console.log('usage: bajel [-n] [-p] [target]')
+    theConsole.log('usage: bajel [-n] [-p] [target]')
     return true
   }
+
+  const explicitTargets = Object.keys(bajelfile).filter(k => !k.includes('$1'))
+  if (explicitTargets.length === 0) {
+    theConsole.error(`No explicit targets in ${Object.keys(bajelfile)}`)
+    return false
+  }
+
   const dryRun = options.n
   const start = options._.length > 0
     ? options._[0]
-    : Object.keys(bajelfile)[0]
+    : explicitTargets[0]
 
   if (options.p) {
-    console.log(Object.keys(bajelfile))
+    theConsole.log(Object.keys(bajelfile))
     return true
   }
 
@@ -61,17 +70,17 @@ module.exports = async bajelfile => {
 
   const printAndExec = cmd => new Promise(resolve => {
     const trimmed = shellTrim(cmd)
-    console.log(trimmed)
+    theConsole.log(trimmed)
     if (dryRun) {
       resolve(true)
       return
     }
     const process = spawn(trimmed, [], { shell: true })
-    process.stdout.on('data', data => { console.log(data.toString()) })
-    process.stderr.on('data', data => { console.error(data.toString()) })
+    process.stdout.on('data', data => { theConsole.log(data.toString()) })
+    process.stderr.on('data', data => { theConsole.error(data.toString()) })
     process.on('exit', code => {
       if (code !== 0) {
-        console.error(`FAILED with code ${code}: \n${trimmed}\n`)
+        theConsole.error(`FAILED with code ${code}: \n${trimmed}\n`)
       }
       resolve(code === 0)
     })
@@ -82,14 +91,13 @@ module.exports = async bajelfile => {
  * @returns {[succeeded, number]} whether succeeded and timestamp in ms of latest file change
  * */
   const recurse = async target => {
-    // console.log('target=', target, 'deps=', deps)
     const targetTime = await timestamp(target)
     const task = bajelfile[target] || []
     const deps = strings(task)
     const execs = functions(task)
     assert.strictEqual(deps.length + execs.length, task.length)
     if (task.length === 0 && targetTime === 0) {
-      console.warn(`No target "${target}"`)
+      theConsole.warn(`No target "${target}"`)
       return [false]
     }
     let lastDepsTime = 0
@@ -107,7 +115,7 @@ module.exports = async bajelfile => {
         const source = deps.length > 0 ? deps[0] : '***no-source***'
         const success = await printAndExec(exec({ source, target }))
         if (!success) {
-          console.error('FAILED  ', target, ':', deps.join(' '))
+          theConsole.error('FAILED  ', target, ':', deps.join(' '))
           return [success]
         }
       }
@@ -172,15 +180,15 @@ module.exports = async bajelfile => {
         }
       }
       if (!matchHappened) {
-        console.warn(`No match for  ${target}: ${from}`)
+        theConsole.warn(`No match for  ${target}: ${from}`)
       }
     }
     toRemove.forEach(target => { delete bajelfile[target] })
     for (const target in toAdd) {
       if (bajelfile[target]) {
-        console.warn('Duplicate targets')
-        console.warn(target, ':', bajelfile[target])
-        console.warn(target, ':', toAdd[target])
+        theConsole.warn('Duplicate targets')
+        theConsole.warn(target, ':', bajelfile[target])
+        theConsole.warn(target, ':', toAdd[target])
       }
       bajelfile[target] = toAdd[target]
     }
@@ -191,16 +199,13 @@ module.exports = async bajelfile => {
   const [success, ts] = await recurse(start)
 
   if (!success) {
-    console.error('Execution failed.')
+    theConsole.error('Execution failed.')
     return false
   }
   if (dryRun) {
-    console.log('Dry run finished.')
+    theConsole.log('Dry run finished.')
     return true
   }
-  console.log('Execution succeeded.')
-  if (ts) {
-    console.log('Latest file modified ', ago(ts))
-  }
+  theConsole.log('Execution succeeded.')
   return true
 }
