@@ -113,7 +113,8 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
     for (const exec of execs) {
       if (targetTime === 0 || targetTime < lastDepsTime) {
         const source = deps.length > 0 ? deps[0] : '***no-source***'
-        const success = await printAndExec(exec({ source, target }))
+        const sources = deps.join(' ')
+        const success = await printAndExec(exec({ source, sources, target }))
         if (!success) {
           theConsole.error('FAILED  ', target, ':', deps.join(' '))
           return [success]
@@ -196,7 +197,9 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
   }
 
   while (expandDeps()) {}
+  const t0 = Date.now()
   const [success, ts] = await recurse(start)
+  const updated = (ts > t0)
 
   if (!success) {
     theConsole.error('Execution failed.')
@@ -206,6 +209,6 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
     theConsole.log('Dry run finished.')
     return true
   }
-  theConsole.log('Execution succeeded.')
+  theConsole.log(updated ? 'Execution succeeded.' : 'Up to date.')
   return true
 }

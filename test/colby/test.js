@@ -52,7 +52,6 @@ test('Colby1', async t => {
 test('Colby2', async t => {
   process.chdir(__dirname)
   await rm('-f', 'hellomake', 'hellomake.o', 'hellofunc.o')
-  t.false(fs.existsSync('hellomake'))
   const fakeStdout = StreamToString()
   const fakeStderr = StreamToString()
 
@@ -75,4 +74,51 @@ test('Colby2', async t => {
   'gcc -c -o hellofunc.o hellofunc.c -I.\n' +
   'gcc -o hellomake hellomake.o hellofunc.o\n' +
   'Execution succeeded.\n')
+})
+
+const CC = 'gcc'
+const CFLAGS = '-I.'
+const DEPS = ['hellomake.h']
+const OBJ = ['hellomake.o', 'hellofunc.o']
+const bajelfile = {
+
+  '$1.o': [/(.*)\.c/, ...DEPS,
+    c => `${CC} -c -o ${c.target} ${c.source} ${CFLAGS}`],
+
+  hellomake: [...OBJ,
+    c => `${CC} -o ${c.target} ${c.sources} ${CFLAGS}`]
+}
+
+test('Colby4', async t => {
+  process.chdir(__dirname)
+  await rm('-f', 'hellomake', 'hellomake.o', 'hellofunc.o')
+  const fakeStdout = StreamToString()
+  const fakeStderr = StreamToString()
+
+  const success = await build(bajelfile, fakeStdout.stream, fakeStderr.stream)
+
+  t.deepEqual(fakeStdout.toString(),
+    'gcc -c -o hellomake.o hellomake.c -I.\n' +
+    'gcc -c -o hellofunc.o hellofunc.c -I.\n' +
+    'gcc -o hellomake hellomake.o hellofunc.o -I.\n' +
+    'Execution succeeded.\n')
+  t.deepEqual(fakeStderr.toString(), '')
+  t.true(success)
+  t.true(fs.existsSync('hellomake'))
+})
+
+test('Up to date', async t => {
+  process.chdir(__dirname)
+  await rm('-f', 'hellomake', 'hellomake.o', 'hellofunc.o')
+  const fakeStdout = StreamToString()
+  const fakeStderr = StreamToString()
+
+  await build(bajelfile)
+  const success = await build(bajelfile, fakeStdout.stream, fakeStderr.stream)
+
+  t.deepEqual(fakeStdout.toString(),
+    'Up to date.\n')
+  t.deepEqual(fakeStderr.toString(), '')
+  t.true(success)
+  t.true(fs.existsSync('hellomake'))
 })
