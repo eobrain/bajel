@@ -26,9 +26,12 @@ const StreamToString = () => {
 
 // http://www.cs.colby.edu/maxwell/courses/tutorials/maketutor/
 
-test('Colby1', async t => {
+test.beforeEach('initialize directort', async () => {
   process.chdir(__dirname)
-  await rm('-f', 'hellomake')
+  await rm('-f', 'hellomake', 'hellomake.o', 'hellofunc.o')
+})
+
+test.serial('Colby1', async t => {
   t.false(fs.existsSync('hellomake'))
   const fakeStdout = StreamToString()
   const fakeStderr = StreamToString()
@@ -49,9 +52,7 @@ test('Colby1', async t => {
    'Execution succeeded.\n')
 })
 
-test('Colby2', async t => {
-  process.chdir(__dirname)
-  await rm('-f', 'hellomake', 'hellomake.o', 'hellofunc.o')
+test.serial('Colby2', async t => {
   const fakeStdout = StreamToString()
   const fakeStderr = StreamToString()
 
@@ -89,9 +90,7 @@ const bajelfile = {
     c => `${CC} -o ${c.target} ${c.sources} ${CFLAGS}`]
 }
 
-test('Colby4', async t => {
-  process.chdir(__dirname)
-  await rm('-f', 'hellomake', 'hellomake.o', 'hellofunc.o')
+test.serial('Colby4', async t => {
   const fakeStdout = StreamToString()
   const fakeStderr = StreamToString()
 
@@ -107,9 +106,7 @@ test('Colby4', async t => {
   t.true(fs.existsSync('hellomake'))
 })
 
-test('Up to date', async t => {
-  process.chdir(__dirname)
-  await rm('-f', 'hellomake', 'hellomake.o', 'hellofunc.o')
+test.serial('Up to date', async t => {
   const fakeStdout = StreamToString()
   const fakeStderr = StreamToString()
 
