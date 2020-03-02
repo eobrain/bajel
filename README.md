@@ -38,7 +38,7 @@ build({
 You can execute the build like so:
 
 ```sh
-$ node build.js
+$ npx bajel
 gcc -c -o hellomake.o hellomake.c -I.
 gcc -c -o hellofunc.o hellofunc.c -I.
 gcc -o hellomake hellomake.o hellofunc.o -I.
