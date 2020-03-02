@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "A build system modelled on make.",
   "main": "index.js",
+  "bin": {
+    "bajel": "./cli.js"
+  },
   "scripts": {
     "test": "ava"
   },
