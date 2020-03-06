@@ -22,14 +22,19 @@ const OBJ = ['hellomake.o', 'hellofunc.o']
 
 build({
 
-  '%.o': ['%.c', ...DEPS,
-    c => `${CC} -c -o %.o %.c ${CFLAGS}`],
+  '%.o': [
+    '%.c',
+    ...DEPS,
+    c => [CC, '-c -o', c.target, c.source, CFLAGS]
+  ],
 
-  hellomake: [...OBJ,
-    c => `${CC} -o ${c.target} ${c.sources} ${CFLAGS}`],
+  hellomake: [
+    ...OBJ,
+    c => [CC, '-o ', c.target, c.sources, CFLAGS]
+  ],
 
   clean: [
-    c => `rm -f hellomake ${OBJ.join(' ')}`
+    c => ['rm', '-f hellomake', ...OBJ]
   ]
 
 })

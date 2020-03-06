@@ -33,44 +33,15 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
     ? options._[0]
     : explicitTargets[0]
 
-  if (options.p) {
-    theConsole.log(Object.keys(bajelfile))
-    return true
-  }
-
   const timestamp = path =>
     fs.promises.stat(path)
       .then(s => s.mtimeMs)
       .catch(e => 0)
 
-  const ago = (t) => {
-    if (t === 0) {
-      return 'missing'
-    }
-    const ms = Date.now() - t
-    if (ms < 1000) {
-      return `${ms.toPrecision(3)}ms ago`
-    }
-    const s = ms / 1000
-    if (s < 60) {
-      return `${s.toPrecision(3)}s ago`
-    }
-    const min = s / 60
-    if (min < 60) {
-      return `${min.toPrecision(3)} min ago`
-    }
-    const hour = min / 60
-    if (hour < 24) {
-      return `${hour.toPrecision(3)} hours ago`
-    }
-    const day = hour / 24
-    return `${day.toPrecision(3)} days ago`
-  }
-
   const shellTrim = cmd => cmd.split('\n').map(s => s.trim()).join('\n')
 
   const printAndExec = cmd => new Promise(resolve => {
-    const trimmed = shellTrim(cmd)
+    const trimmed = shellTrim(cmd.join ? cmd.join(' ') : cmd)
     theConsole.log(trimmed)
     if (dryRun) {
       resolve(true)
@@ -93,14 +64,16 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
  * */
   const recurse = async target => {
     const targetTime = await timestamp(target)
+    if (!bajelfile[target] && targetTime === 0) {
+      theConsole.warn(target,
+        'is not a file and is not one of the build targets:',
+        Object.keys(bajelfile).sort())
+      return [false]
+    }
     const task = bajelfile[target] || []
     const deps = strings(task)
     const execs = functions(task)
     assert.strictEqual(deps.length + execs.length, task.length)
-    if (task.length === 0 && targetTime === 0) {
-      theConsole.warn(`No target "${target}"`)
-      return [false]
-    }
     let lastDepsTime = 0
     for (let i = 0; i < deps.length; ++i) {
       const [depSuccess, depTime] = await recurse(deps[i])
@@ -126,7 +99,7 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
     return [true, updatedTime]
   }
 
-  // shoutout https://medium.com/@allenhwkim/nodejs-walk-directory-f30a2d8f038f
+  // shout out https://medium.com/@allenhwkim/nodejs-walk-directory-f30a2d8f038f
   const walkDir = (dir, callback) => {
     fs.readdirSync(dir).forEach(f => {
       const dirPath = path.join(dir, f)
@@ -160,6 +133,10 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
         }
       }
       if (!from) {
+        if (target.includes('%')) {
+          throw new Error(
+            `Target "${target} has replacement pattern, but dependencies have no percents: ${task}`)
+        }
         continue
       }
       const deps = strings(task)
@@ -168,12 +145,15 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
       for (const file of [...files, ...Object.keys(bajelfile)]) {
         const match = from.match(file)
         if (match) {
-          const expand = s => {
-            if ((typeof s) !== 'string') {
-              throw new Error(
-                `In target "${target}:" with percent patterns, expected string but got ${typeof s} (${s})`)
+          const expand = x => {
+            if ((typeof x) === 'string') {
+              return x.split('%').join(match)
             }
-            return s.split('%').join(match)
+            if (x.length) {
+              return x.map(s => s.split('%').join(match))
+            }
+            throw new Error(
+                `In target "${target}:" with percent patterns, expected string or array but got ${typeof s} (${x})`)
           }
           matchHappened = expansionHappened = true
           toRemove.push(target)
@@ -200,7 +180,12 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
     return expansionHappened
   }
 
-  while (expandDeps()) {}
+  try {
+    while (expandDeps()) {}
+  } catch (e) {
+    theConsole.error('Problem expanding percents: ' + e)
+    return false
+  }
 
   const t0 = Date.now()
   try {

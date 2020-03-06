@@ -32,7 +32,6 @@ test('anything', t => {
   t.deepEqual(p.match('abcPQRdef'), 'abcPQRdef')
 })
 
-
 test('no percent', t => {
   const p = Percent('abc')
 
