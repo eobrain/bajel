@@ -2,6 +2,7 @@
 
 const fs = require('fs')
 const build = require('./index.js')
+const yaml = require('js-yaml')
 
 const main = async () => {
   const prefix = process.cwd() + '/build.'
@@ -11,6 +12,8 @@ const main = async () => {
     bajelfile = require(prefix + 'cjs')
   } else if (fs.existsSync(prefix + 'mjs')) {
     bajelfile = (await import(prefix + 'mjs')).default
+  } else if (fs.existsSync(prefix + 'yaml')) {
+    bajelfile = yaml.safeLoad(fs.readFileSync(prefix + 'yaml', 'utf8'))
   } else if (fs.existsSync(prefix + 'json')) {
     bajelfile = JSON.parse(fs.readFileSync(prefix + 'json', 'utf8'))
   } else {
