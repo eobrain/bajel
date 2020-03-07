@@ -2,7 +2,6 @@ const CC = 'gcc'
 const CFLAGS = '-I.'
 const DEPS = ['hellomake.h']
 const OBJ = ['hellomake.o', 'hellofunc.o']
-
 module.exports = {
 
   '%.o': {

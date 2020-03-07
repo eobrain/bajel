@@ -26,7 +26,8 @@
     "getopts": "^2.2.5",
     "install": "^0.13.0",
     "js-yaml": "^3.13.1",
-    "remove": "^0.1.5"
+    "remove": "^0.1.5",
+    "toml": "^3.0.0"
   },
   "devDependencies": {
     "ava": "^3.4.0",
