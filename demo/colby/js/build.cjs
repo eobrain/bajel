@@ -1,11 +1,9 @@
-const build = require('../../../index.js')
-
 const CC = 'gcc'
 const CFLAGS = '-I.'
 const DEPS = ['hellomake.h']
 const OBJ = ['hellomake.o', 'hellofunc.o']
 
-build({
+module.exports = {
 
   '%.o': {
     deps: ['%.c', ...DEPS],
@@ -20,4 +18,5 @@ build({
   clean: {
     exec: `rm -f hellomake ${OBJ.join(' ')}`
   }
-})
+
+}

@@ -5,10 +5,14 @@ const build = require('./index.js')
 
 const prefix = process.cwd() + '/build.'
 
+let bajelfile
 if (fs.existsSync(prefix + 'cjs')) {
-  require(prefix + 'cjs')
+  bajelfile = require(prefix + 'cjs')
 } else if (fs.existsSync(prefix + 'json')) {
-  build(JSON.parse(fs.readFileSync(prefix + 'json', 'utf8')))
+  bajelfile = JSON.parse(fs.readFileSync(prefix + 'json', 'utf8'))
 } else {
   console.error('ERROR: No build file.')
+  process.exit(1)
 }
+
+build(bajelfile)
