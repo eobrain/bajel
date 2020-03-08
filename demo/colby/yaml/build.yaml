@@ -1,12 +1,12 @@
 "%.o":
   deps:
-  - "%.c"
-  - hellomake.h
+    - "%.c"
+    - hellomake.h
   exec: gcc -c -o $@ $< -I.
 hellomake:
   deps:
-  - hellomake.o
-  - hellofunc.o
+    - hellomake.o
+    - hellofunc.o
   exec: gcc -o $@ $+ -I.
 clean:
   exec: rm -f hellomake hellomake.o hellofunc.o
