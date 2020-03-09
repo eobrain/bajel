@@ -5,7 +5,7 @@ const getopts = require('getopts')
 const { Console } = require('console')
 const Percent = require('./percent.js')
 
-const trace = x => console.x || x
+// const trace = x => console.x || x
 
 module.exports = async (bajelfile, stdout = process.stdout, stderr = process.stderr) => {
   const theConsole = new Console(stdout, stderr)
@@ -85,7 +85,7 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
     if (exec && (targetTime === 0 || targetTime < lastDepsTime)) {
       const source = deps.length > 0 ? deps[0] : '***no-source***'
       const sources = deps.join(' ')
-      const substitutedExec = trace(exec)
+      const substitutedExec = exec
         .replace(/\$@/g, target)
         .replace(/\$</g, source)
         .replace(/\$\+/g, sources)
@@ -120,6 +120,9 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
     for (const target in bajelfile) {
       const task = bajelfile[target]
       let deps = task.deps || []
+      if (!deps.filter) {
+        throw new Error('Deps should be an array in\n"' + target + '":' + JSON.stringify(task, null, 1))
+      }
       let from
       for (let i = 0; i < deps.length; ++i) {
         from = Percent(deps[i])

@@ -1,6 +1,25 @@
 # Bajel : a Simple Build System
 
-![][1]
+![logo][1]
+
+Bajel is an easy way of executing commands for building any kind of target
+files.
+
+It will only build a target file if is out of date relative to its dependencies.
+
+You specify the build targets, their dependencies, and the build commands in a
+build file which has a very simple conceptual structure:
+
+* A list of targets, each of which has
+  * a list of dependencies (`deps`)
+  * a command to execute (`exec`)
+
+You can write the build file in your favorite format:
+
+* TOML if you like things clean and readable
+* YAML if that's your thing
+* JSON if you want just the basics
+* JavaScript if you want to use variables for complex builds
 
 ## Installation
 
@@ -8,7 +27,7 @@
 npm install --save-dev bajel
 ```
 
-## Examples
+## Usage
 
 The command
 
@@ -16,15 +35,37 @@ The command
 npx bajel
 ```
 
-will execute the build file whose name must be of the form `build.*` in the current directory, where the suffix depends on the language of the build file, of which several are supported:
+will build the default target in build file in the current directory.
 
-* `build.toml` 
+The default target is the first target in the file that is not a file pattern
+(with a `%` wildcard).
+
+```sh
+npx bajel foo
+```
+
+Will build target `foo`.
+
+```sh
+npx bajel -n
+```
+
+Will do a dry run, printing out the commands that it would execute, but not
+actually executing them.
+
+The build file must be one of the following names:
+
+* `build.toml`
 * `build.yaml`
 * `build.json`
 * `build.cjs` (JavaScript, as a classic Node-JS module)
-* `build.mjs` (JavaScript as a new-style ES6 module)
+* `build.mjs` (JavaScript, as a new-style ES6 module)
 
-All these different languages are alternate syntaxes of specifying the same underlying build file structure, as shown by the following examples (based on a [makefile example][2]), each of which specify the same thing: 
+All these different languages are alternate syntaxes of specifying the same
+underlying build file structure, as shown by the following examples (based on a
+[makefile example][2]), each of which specify the same thing.
+
+## Examples
 
 ### build.toml
 
@@ -140,6 +181,24 @@ export default {
 }
 ```
 
+### Real world examples
+
+* Diagmap's [build.toml][5] is a fairly straightforward build file in TOML
+  format. The only slightly tricky aspect is that it take advantage of the `%`
+  wild card to create empty `.ok` files to indicate that the corresponding `.js`
+  file has successfully passed the StandardJS linter.
+* The [build.cjs][4] for a blog uses JavaScript variables, but it is otherwise
+  fairly simple.
+* Mergi's [build.mjs][3] is a fairly complex build file which uses the power of
+  JavaScript to remove duplication by refactoring out common elements. For
+  example it extensively uses the `...` spread operator to insert sub arrays
+  into the `deps` arrays and to insert new dynamically generated targets into
+  the main dictionary.
+
+[3]: https://github.com/eobrain/mergi/blob/master/build.mjs
+[4]: https://github.com/eobrain/webhome/blob/master/build.cjs
+[5]: https://github.com/eobrain/diagmap/blob/master/build.toml
+
 ## Build File Structure
 
 A build file has a set of top level *target* strings, each of which may be
@@ -151,18 +210,22 @@ A build file has a set of top level *target* strings, each of which may be
 Each target may have a `deps` field which is a list of strings, which either:
 
 1. Another target in the build file
-2. An existing file or file pattern 
+2. An existing file or file pattern
 
-Each target may have an `exec` field which is a string that gets executed by the Linux-style shell, but only if the target does not exist as a file, or if the target is older than all the `deps`.
+Each target may have an `exec` field which is a string that gets executed by the
+Linux-style shell, but only if the target does not exist as a file, or if the
+target is older than all the `deps`.
 
-The `exec` string may have some special patterns that get expanded:
+The `exec` string may have some special patterns:
 
 * `%` expands to whatever matched the `%` in the target
-* `$@` expands to the target, with any `%` expanded to the matching file path
-* `$<` expands to the first `deps` field
-* `$+` expands to all the `deps` fields, separated by spaces
+* `$@` is replaced by the target (after `%` expansion)
+* `$<` is replaced by the first `deps` field (after `%` expansion)
+* `$+` is replaced by the all the `deps` fields (after `%` expansion) separated
+  by spaces
 
-(People familiar with makefiles will note that the samantics are the same, though much simplified.)
+(If you are familiar with makefiles you will note that the semantics are the
+same, though much simplified.)
 
 ## Legal
 
