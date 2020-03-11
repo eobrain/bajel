@@ -2,18 +2,7 @@ const { rm, touch } = require('nodejs-sh')
 const fs = require('fs')
 const test = require('ava')
 const build = require('../../index.js')
-const { Writable } = require('stream')
-
-const StreamToString = () => {
-  let string = ''
-  const stream = Writable()
-  stream._write = (chunk, enc, next) => {
-    string += chunk.toString()
-    next()
-  }
-  const toString = () => string
-  return { stream, toString }
-}
+const { StreamToString } = require('../_test_helper.js')
 
 // Based on Makefile examples in
 // http://www.cs.colby.edu/maxwell/courses/tutorials/maketutor/
@@ -28,7 +17,7 @@ test.serial('Colby1', async t => {
   const fakeStdout = StreamToString()
   const fakeStderr = StreamToString()
 
-  const success = await build(
+  const code = await build(
     {
       hellomake: {
         deps: ['hellomake.c', 'hellofunc.c'],
@@ -39,9 +28,8 @@ test.serial('Colby1', async t => {
   )
 
   t.deepEqual(fakeStdout.toString() + fakeStderr.toString(),
-    'gcc -o hellomake hellomake.c hellofunc.c -I.\n' +
-   'Execution succeeded.\n')
-  t.true(success)
+    'gcc -o hellomake hellomake.c hellofunc.c -I.\n')
+  t.deepEqual(0, code)
   t.true(fs.existsSync('hellomake'))
 })
 
@@ -51,7 +39,7 @@ test.serial('Colby2', async t => {
 
   const CC = 'gcc'
   const CFLAGS = '-I.'
-  const success = await build(
+  const code = await build(
     {
       '%.o': {
         deps: ['%.c'],
@@ -66,10 +54,9 @@ test.serial('Colby2', async t => {
 
   t.deepEqual(fakeStdout.toString() + fakeStderr.toString(),
     'gcc -c -o hellomake.o hellomake.c -I.\n' +
-  'gcc -c -o hellofunc.o hellofunc.c -I.\n' +
-  'gcc -o hellomake hellomake.o hellofunc.o\n' +
-  'Execution succeeded.\n')
-  t.true(success)
+    'gcc -c -o hellofunc.o hellofunc.c -I.\n' +
+    'gcc -o hellomake hellomake.o hellofunc.o\n')
+  t.deepEqual(0, code)
   t.true(fs.existsSync('hellomake'))
 })
 
@@ -98,14 +85,13 @@ test.serial('Colby4', async t => {
   const fakeStdout = StreamToString()
   const fakeStderr = StreamToString()
 
-  const success = await build(bajelfile, fakeStdout.stream, fakeStderr.stream)
+  const code = await build(bajelfile, fakeStdout.stream, fakeStderr.stream)
 
   t.deepEqual(fakeStdout.toString() + fakeStderr.toString(),
     'gcc -c -o hellomake.o hellomake.c -I.\n' +
     'gcc -c -o hellofunc.o hellofunc.c -I.\n' +
-    'gcc -o hellomake hellomake.o hellofunc.o -I.\n' +
-    'Execution succeeded.\n')
-  t.true(success)
+    'gcc -o hellomake hellomake.o hellofunc.o -I.\n')
+  t.deepEqual(0, code)
   t.true(fs.existsSync('hellomake'))
 })
 
@@ -114,11 +100,11 @@ test.serial('Up to date', async t => {
   const fakeStderr = StreamToString()
 
   await build(bajelfile)
-  const success = await build(bajelfile, fakeStdout.stream, fakeStderr.stream)
+  const code = await build(bajelfile, fakeStdout.stream, fakeStderr.stream)
 
-  t.deepEqual(fakeStdout.toString() + fakeStderr.toString(),
-    'Up to date.\n')
-  t.true(success)
+  t.regex(fakeStdout.toString() + fakeStderr.toString(),
+    /bajel: 'hellomake' is up to date./)
+  t.deepEqual(0, code)
   t.true(fs.existsSync('hellomake'))
 })
 
@@ -128,13 +114,12 @@ test.serial('One file updated', async t => {
 
   await build(bajelfile)
   touch('hellomake.c')
-  const success = await build(bajelfile, fakeStdout.stream, fakeStderr.stream)
+  const code = await build(bajelfile, fakeStdout.stream, fakeStderr.stream)
 
   t.deepEqual(fakeStdout.toString(),
     'gcc -c -o hellomake.o hellomake.c -I.\n' +
-    'gcc -o hellomake hellomake.o hellofunc.o -I.\n' +
-    'Execution succeeded.\n')
+    'gcc -o hellomake hellomake.o hellofunc.o -I.\n')
   t.deepEqual(fakeStderr.toString(), '')
-  t.true(success)
+  t.deepEqual(0, code)
   t.true(fs.existsSync('hellomake'))
 })

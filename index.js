@@ -1,23 +1,29 @@
-const fs = require('fs')
-const path = require('path')
 const { spawn } = require('child_process')
 const getopts = require('getopts')
 const { Console } = require('console')
 const Percent = require('./percent.js')
+const { timestamp, walkDir } = require('./fs_util.js')
 
 // const trace = x => console.x || x
 
 module.exports = async (bajelfile, stdout = process.stdout, stderr = process.stderr) => {
   const theConsole = new Console(stdout, stderr)
   const options = getopts(process.argv.slice(2), {
-    boolean: ['n', 'p'],
+    boolean: ['n', 'p', 'd', 'h'],
     alias: {
       n: ['just-print', 'dry-run', 'recon'],
+      h: ['help'],
+      d: ['debug'],
       stopEarly: true
     }
   })
   if (options.help) {
-    theConsole.log('usage: bajel [-n] [-p] [target]')
+    theConsole.log(`
+       usage: bajel[-n][-p][-h][target]
+       -n  dry run
+       -p  print out the expanded build file
+       -h  this help
+       `)
     return true
   }
 
@@ -32,18 +38,13 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
     ? options._[0]
     : explicitTargets[0]
 
-  const timestamp = path =>
-    fs.promises.stat(path)
-      .then(s => s.mtimeMs)
-      .catch(e => 0)
-
   const shellTrim = cmd => cmd.split('\n').map(s => s.trim()).join('\n')
 
   const printAndExec = cmd => new Promise(resolve => {
     const trimmed = shellTrim(cmd.join ? cmd.join(' ') : cmd)
     theConsole.log(trimmed)
     if (dryRun) {
-      resolve(true)
+      resolve(0)
       return
     }
     const process = spawn(trimmed, [], { shell: true })
@@ -53,15 +54,16 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
       if (code !== 0) {
         theConsole.error(`FAILED with code ${code}: \n${trimmed}\n`)
       }
-      resolve(code === 0)
+      resolve(code)
     })
   })
 
   /**
  * @param {string} target being built
- * @returns {[succeeded, number]} whether succeeded and timestamp in ms of latest file change
+ * @returns {[errorCode, number, execHappened]} whether succeeded and timestamp in ms of latest file change
  * */
   const recurse = async target => {
+    let execHappened = false
     const targetTime = await timestamp(target)
     if (!bajelfile[target] && targetTime === 0) {
       theConsole.warn(target,
@@ -74,41 +76,60 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
     const exec = task.exec
     let lastDepsTime = 0
     for (let i = 0; i < deps.length; ++i) {
-      const [depSuccess, depTime] = await recurse(deps[i])
-      if (!depSuccess) {
-        return [depSuccess]
+      const [depCode, depTime, depExecHappened] = await recurse(deps[i])
+      execHappened = execHappened || depExecHappened
+      if (depCode !== 0) {
+        if (options.debug) {
+          theConsole.log(`Execution of target "${deps[i]}" failed. Stopping.`)
+        }
+        return [depCode]
       }
       if (depTime > lastDepsTime) {
         lastDepsTime = depTime
       }
     }
+    const debugOut = f => {
+      if (options.debug) {
+        theConsole.log(`target "${target}" ${f()}`)
+      }
+    }
+
+    debugOut(() => `${ago(targetTime)} compared to most recent deps ${ago(lastDepsTime)}`)
     if (exec && (targetTime === 0 || targetTime < lastDepsTime)) {
+      if (options.debug) {
+        if (targetTime === 0) {
+          theConsole.log(`does not exist and has an exec`)
+        } else {
+          theConsole.log(`is older than the most recent dep and has an exec`)
+        }
+      }
+      debugOut(() => targetTime === 0
+        ? `does not exist and has an exec`
+        : `is older than the most recent dep and has an exec`
+      )
       const source = deps.length > 0 ? deps[0] : '***no-source***'
       const sources = deps.join(' ')
       const substitutedExec = exec
         .replace(/\$@/g, target)
         .replace(/\$</g, source)
         .replace(/\$\+/g, sources)
-      const success = await printAndExec(substitutedExec)
-      if (!success) {
+      const code = await printAndExec(substitutedExec)
+      execHappened = true
+      if (code !== 0) {
         theConsole.error('FAILED  ', target, ':', deps.join(' '))
-        return [success]
+        return [code]
       }
+    } else {
+      debugOut(() => !exec
+        ? `target "${target}" has no exec`
+        : (lastDepsTime === 0
+          ? `exists and there are no deps so ignoring exec`
+          : `is more recent than the most recent dep so ignoring exec`
+        )
+      )
     }
     const updatedTime = Math.max(lastDepsTime, await timestamp(target))
-    return [true, updatedTime]
-  }
-
-  // shout out https://medium.com/@allenhwkim/nodejs-walk-directory-f30a2d8f038f
-  const walkDir = (dir, callback) => {
-    fs.readdirSync(dir).forEach(f => {
-      const dirPath = path.join(dir, f)
-      if (fs.statSync(dirPath).isDirectory()) {
-        walkDir(dirPath, callback)
-      } else {
-        callback(path.join(dir, f))
-      }
-    })
+    return [0, updatedTime, execHappened]
   }
 
   const expandDeps = () => {
@@ -173,29 +194,66 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
   }
 
   try {
-    while (expandDeps()) {}
+    while (expandDeps()) { }
   } catch (e) {
+    console.error(e)
     theConsole.error('Problem expanding percents: ' + e)
+    if (options.p) {
+      theConsole.log(bajelfile)
+    }
     return false
+  }
+  if (options.p) {
+    theConsole.log(bajelfile)
+    return true
   }
 
   const t0 = Date.now()
-  try {
-    const [success, ts] = await recurse(start)
-    const updated = (ts > t0)
 
-    if (!success) {
-      theConsole.error('Execution failed.')
-      return false
+  const ago = (t) => {
+    if (t === 0) {
+      return 'missing'
+    }
+    const ms = t0 - t
+    if (ms < 1000) {
+      return `${ms.toPrecision(3)}ms ago`
+    }
+    const s = ms / 1000
+    if (s < 60) {
+      return `${s.toPrecision(3)}s ago`
+    }
+    const min = s / 60
+    if (min < 60) {
+      return `${min.toPrecision(3)} min ago`
+    }
+    const hour = min / 60
+    if (hour < 24) {
+      return `${hour.toPrecision(3)} hours ago`
+    }
+    const day = hour / 24
+    return `${day.toPrecision(3)} days ago`
+  }
+
+  try {
+    const [code, ts, execHappened] = await recurse(start)
+
+    if (code !== 0) {
+      theConsole.error(`bajel: recipe for target '${start}' failed\nbajel: *** [error] Error ${code}`)
+      return code
     }
     if (dryRun) {
-      theConsole.log('Dry run finished.')
-      return true
+      return 0
     }
-    theConsole.log(updated ? 'Execution succeeded.' : 'Up to date.')
-    return true
+    const phony = (await timestamp(start) === 0)
+    if (phony && !execHappened) {
+      theConsole.log(`bajel: Nothing to be done for '${start}'.`)
+    }
+    if (!phony && !execHappened) {
+      theConsole.log(`bajel: '${start}' is up to date. (${ago(ts)})`)
+    }
+    return 0
   } catch (e) {
     theConsole.error(e.toString())
-    return false
+    return 1
   }
 }
