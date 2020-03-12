@@ -60,16 +60,18 @@ const main = async () => {
         throw new Error(`${tomlPath}:${e.line}:${e.column} ${e.message}`)
       }
     }
-    console.error('ERROR: No build file.')
-    process.exit(1)
+    throw new Error('ERROR: No build file.')
+    
   }
 
   try {
-    build(await bajelfile())
+    return build(await bajelfile())
   } catch (e) {
     console.error(e)
-    process.exit(1)
+    return 1
   }
 }
 
-main()
+module.exports = main // for testing
+
+main().then(code =>  process.exit(code))
