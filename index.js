@@ -24,13 +24,14 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
        -p  print out the expanded build file
        -h  this help
        `)
-    return true
+    return 0
   }
 
   const explicitTargets = Object.keys(bajelfile).filter(k => !k.includes('%'))
   if (explicitTargets.length === 0) {
-    theConsole.error(`No explicit targets in ${Object.keys(bajelfile)}`)
-    return false
+    const targetsStr = JSON.stringify(Object.keys(bajelfile))
+    theConsole.error(`No explicit targets in ${targetsStr}`)
+    return 1
   }
 
   const dryRun = options.n
@@ -63,13 +64,19 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
  * @returns {[errorCode, number, execHappened]} whether succeeded and timestamp in ms of latest file change
  * */
   const recurse = async target => {
+    const debugOut = f => {
+      if (options.debug) {
+        theConsole.log(`target "${target}" ${f()}`)
+      }
+    }
+
     let execHappened = false
     const targetTime = await timestamp(target)
     if (!bajelfile[target] && targetTime === 0) {
       theConsole.warn(target,
         'is not a file and is not one of the build targets:',
         Object.keys(bajelfile).sort())
-      return [false]
+      return [1]
     }
     const task = bajelfile[target] || {}
     const deps = task.deps || []
@@ -79,36 +86,25 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
       const [depCode, depTime, depExecHappened] = await recurse(deps[i])
       execHappened = execHappened || depExecHappened
       if (depCode !== 0) {
-        if (options.debug) {
-          theConsole.log(`Execution of target "${deps[i]}" failed. Stopping.`)
-        }
+        debugOut(() => `-- execution of dep target "${deps[i]}" failed. Stopping.`)
         return [depCode]
       }
       if (depTime > lastDepsTime) {
         lastDepsTime = depTime
       }
     }
-    const debugOut = f => {
-      if (options.debug) {
-        theConsole.log(`target "${target}" ${f()}`)
-      }
-    }
 
-    debugOut(() => `${ago(targetTime)} compared to most recent deps ${ago(lastDepsTime)}`)
+    debugOut(() => `${ago(targetTime)} and its most recent deps ${ago(lastDepsTime)}`)
     if (exec && (targetTime === 0 || targetTime < lastDepsTime)) {
-      if (options.debug) {
-        if (targetTime === 0) {
-          theConsole.log(`does not exist and has an exec`)
-        } else {
-          theConsole.log(`is older than the most recent dep and has an exec`)
-        }
-      }
       debugOut(() => targetTime === 0
         ? `does not exist and has an exec`
         : `is older than the most recent dep and has an exec`
       )
       const source = deps.length > 0 ? deps[0] : '***no-source***'
       const sources = deps.join(' ')
+      if (!exec.replace) {
+        throw new TypeError(`exec of target "${target}" should be a string`)
+      }
       const substitutedExec = exec
         .replace(/\$@/g, target)
         .replace(/\$</g, source)
@@ -156,7 +152,7 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
       if (!from) {
         if (target.includes('%')) {
           throw new Error(
-            `Target "${target} has replacement pattern, but dependencies have no percents: ${deps}`)
+            `Target "${target}" has replacement pattern, but dependencies have no percents: ${JSON.stringify(deps)}`)
         }
         continue
       }
@@ -178,15 +174,15 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
         }
       }
       if (!matchHappened) {
-        theConsole.warn(`No match for  ${target}: ${from}`)
+        theConsole.warn(`No match for "${target}"`)
       }
     }
     toRemove.forEach(target => { delete bajelfile[target] })
     for (const target in toAdd) {
       if (bajelfile[target]) {
         theConsole.warn('Duplicate targets')
-        theConsole.warn(target, ':', bajelfile[target])
-        theConsole.warn(target, ':', toAdd[target])
+        theConsole.warn(`"${target}": ${JSON.stringify(bajelfile[target])}`)
+        theConsole.warn(`"${target}": ${JSON.stringify(toAdd[target])}`)
       }
       bajelfile[target] = toAdd[target]
     }
@@ -196,42 +192,41 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
   try {
     while (expandDeps()) { }
   } catch (e) {
-    console.error(e)
     theConsole.error('Problem expanding percents: ' + e)
     if (options.p) {
       theConsole.log(bajelfile)
     }
-    return false
+    return 1
   }
   if (options.p) {
     theConsole.log(bajelfile)
-    return true
+    return 0
   }
 
   const t0 = Date.now()
 
   const ago = (t) => {
     if (t === 0) {
-      return 'missing'
+      return 'does not exist'
     }
     const ms = t0 - t
     if (ms < 1000) {
-      return `${ms.toPrecision(3)}ms ago`
+      return `modified ${ms.toPrecision(3)}ms ago`
     }
     const s = ms / 1000
     if (s < 60) {
-      return `${s.toPrecision(3)}s ago`
+      return `modified ${s.toPrecision(3)}s ago`
     }
     const min = s / 60
     if (min < 60) {
-      return `${min.toPrecision(3)} min ago`
+      return `modified ${min.toPrecision(3)} min ago`
     }
     const hour = min / 60
     if (hour < 24) {
-      return `${hour.toPrecision(3)} hours ago`
+      return `modified ${hour.toPrecision(3)} hours ago`
     }
     const day = hour / 24
-    return `${day.toPrecision(3)} days ago`
+    return `modified ${day.toPrecision(3)} days ago`
   }
 
   try {
@@ -246,7 +241,7 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
     }
     const phony = (await timestamp(start) === 0)
     if (phony && !execHappened) {
-      theConsole.log(`bajel: Nothing to be done for '${start}'.`)
+      theConsole.log(`bajel: Nothing to be done for "${start}".`)
     }
     if (!phony && !execHappened) {
       theConsole.log(`bajel: '${start}' is up to date. (${ago(ts)})`)

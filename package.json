@@ -1,13 +1,13 @@
 {
   "name": "bajel",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "A build system modelled on make.",
   "main": "index.js",
   "bin": {
     "bajel": "./cli.js"
   },
   "scripts": {
-    "test": "ava"
+    "test": "nyc --reporter=html --reporter=text ava"
   },
   "repository": {
     "type": "git",
@@ -31,6 +31,7 @@
   },
   "devDependencies": {
     "ava": "^3.4.0",
-    "nodejs-sh": "^0.2.0"
+    "nodejs-sh": "^0.2.0",
+    "nyc": "^15.0.0"
   }
 }
