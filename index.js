@@ -102,6 +102,9 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
       )
       const source = deps.length > 0 ? deps[0] : '***no-source***'
       const sources = deps.join(' ')
+      if (!exec.replace) {
+        throw new TypeError(`exec of target "${target}" should be a string`)
+      }
       const substitutedExec = exec
         .replace(/\$@/g, target)
         .replace(/\$</g, source)
@@ -178,8 +181,8 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
     for (const target in toAdd) {
       if (bajelfile[target]) {
         theConsole.warn('Duplicate targets')
-        theConsole.warn(target, ':', bajelfile[target])
-        theConsole.warn(target, ':', toAdd[target])
+        theConsole.warn(`"${target}": ${JSON.stringify(bajelfile[target])}`)
+        theConsole.warn(`"${target}": ${JSON.stringify(toAdd[target])}`)
       }
       bajelfile[target] = toAdd[target]
     }
@@ -238,7 +241,7 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
     }
     const phony = (await timestamp(start) === 0)
     if (phony && !execHappened) {
-      theConsole.log(`bajel: Nothing to be done for '${start}'.`)
+      theConsole.log(`bajel: Nothing to be done for "${start}".`)
     }
     if (!phony && !execHappened) {
       theConsole.log(`bajel: '${start}' is up to date. (${ago(ts)})`)

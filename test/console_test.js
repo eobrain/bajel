@@ -43,6 +43,23 @@ test.serial('empty', async t => {
   t.deepEqual(code, 1)
 })
 
+test.serial('nothing to be done', async t => {
+  const fakeStdout = StreamToString()
+  const fakeStderr = StreamToString()
+
+  const code = await build(
+    {
+      does_not_exist: {}
+    },
+    fakeStdout.stream, fakeStderr.stream
+  )
+
+  t.deepEqual(fakeStdout.toString(),
+    'bajel: Nothing to be done for "does_not_exist".\n')
+  t.deepEqual(fakeStderr.toString(), '')
+  t.deepEqual(code, 0)
+})
+
 test.serial('dry run', async t => {
   const fakeStdout = StreamToString()
   const fakeStderr = StreamToString()
@@ -194,4 +211,90 @@ test('no percent match', async t => {
   t.deepEqual(fakeStderr.toString(), 'No match for "%.c"\n')
   t.deepEqual(fakeStdout.toString(), ': hello\n')
   t.deepEqual(code, 0)
+})
+
+test('duplicate targets', async t => {
+  const fakeStdout = StreamToString()
+  const fakeStderr = StreamToString()
+
+  const code = await build(
+    {
+      '%.c': { deps: ['%.bar'] },
+      foo: { exec: ': foofoo' },
+      'test/colby/hellofunc.c': { exec: ': hello' }
+    },
+    fakeStdout.stream, fakeStderr.stream
+  )
+
+  t.deepEqual(fakeStdout.toString(), ': foofoo\n')
+  t.deepEqual(fakeStderr.toString(),
+    'Duplicate targets\n' +
+        '"test/colby/hellofunc.c": {"exec":": hello"}\n' +
+        '"test/colby/hellofunc.c": {"deps":["test/colby/hellofunc.bar"]}\n')
+  t.deepEqual(code, 0)
+})
+
+test.serial('print', async t => {
+  const fakeStdout = StreamToString()
+  const fakeStderr = StreamToString()
+
+  process.argv.push('-p')
+  try {
+    const code = await build(
+      {
+        foo: { exec: ': it executed' }
+      },
+      fakeStdout.stream, fakeStderr.stream
+    )
+
+    t.deepEqual(fakeStdout.toString(),
+      `{ foo: { exec: ': it executed' } }\n`)
+    t.deepEqual(fakeStderr.toString(), '')
+    t.deepEqual(code, 0)
+  } finally {
+    process.argv.pop()
+  }
+})
+
+test.serial('bad deps with print', async t => {
+  const fakeStdout = StreamToString()
+  const fakeStderr = StreamToString()
+
+  process.argv.push('-p')
+  try {
+    const code = await build(
+      {
+        foo: { deps: 'string dep' }
+      },
+      fakeStdout.stream, fakeStderr.stream
+    )
+
+    t.deepEqual(fakeStderr.toString(),
+      'Problem expanding percents: Error: Deps should be an array in\n' +
+            '"foo":{\n' +
+            ' "deps": "string dep"\n' +
+            '}\n')
+    t.deepEqual(fakeStdout.toString(),
+      `{ foo: { deps: 'string dep' } }\n`)
+    t.deepEqual(code, 1)
+  } finally {
+    process.argv.pop()
+  }
+})
+
+test.serial('exception', async t => {
+  const fakeStdout = StreamToString()
+  const fakeStderr = StreamToString()
+
+  const code = await build(
+    {
+      foo: { exec: {} }
+    },
+    fakeStdout.stream, fakeStderr.stream
+  )
+
+  t.deepEqual(fakeStdout.toString(), '')
+  t.deepEqual(fakeStderr.toString(),
+    'TypeError: exec of target "foo" should be a string\n')
+  t.deepEqual(code, 1)
 })
