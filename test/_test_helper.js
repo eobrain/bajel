@@ -24,3 +24,9 @@ module.exports.buildFileTree = async (spec) => {
   }
   return folder
 }
+
+/**
+ * @param {number} ms milliseconds to sleep
+ * @returns {Promise} promise that resolves after the given time.
+ */
+module.exports.sleep = ms => new Promise(resolve => setTimeout(resolve, ms))

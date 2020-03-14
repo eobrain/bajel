@@ -2,7 +2,7 @@ const { rm, touch } = require('nodejs-sh')
 const fs = require('fs')
 const test = require('ava')
 const build = require('../../index.js')
-const { StreamToString } = require('../_test_helper.js')
+const { StreamToString, sleep } = require('../_test_helper.js')
 
 // Based on Makefile examples in
 // http://www.cs.colby.edu/maxwell/courses/tutorials/maketutor/
@@ -29,7 +29,7 @@ test.serial('Colby1', async t => {
 
   t.deepEqual(fakeStdout.toString() + fakeStderr.toString(),
     'gcc -o hellomake hellomake.c hellofunc.c -I.\n')
-  t.deepEqual(0, code)
+  t.deepEqual(code, 0)
   t.true(fs.existsSync('hellomake'))
 })
 
@@ -113,6 +113,7 @@ test.serial('One file updated', async t => {
   const fakeStderr = StreamToString()
 
   await build(bajelfile)
+  await sleep(100)
   touch('hellomake.c')
   const code = await build(bajelfile, fakeStdout.stream, fakeStderr.stream)
 

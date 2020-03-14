@@ -2,3 +2,5 @@ node_modules
 test/colby/hellomake
 test/colby/hellofunc.o
 test/colby/hellomake.o
+/coverage
+/.nyc_output
