@@ -13,6 +13,8 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
     alias: {
       n: ['just-print', 'dry-run', 'recon'],
       h: ['help'],
+      t: ['targets'],
+      T: ['targets-expanded'],
       d: ['debug'],
       stopEarly: true
     }
@@ -22,6 +24,9 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
        usage: bajel[-n][-p][-h][target]
        -n  dry run
        -p  print out the expanded build file
+       -d  debug
+       -t  print out all explicit targets before % expansion
+       -T  print out all targets after % expansion
        -h  this help
        `)
     return 0
@@ -32,6 +37,11 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
     const targetsStr = JSON.stringify(Object.keys(bajelfile))
     theConsole.error(`No explicit targets in ${targetsStr}`)
     return 1
+  }
+
+  if (options.t) {
+    theConsole.log(explicitTargets.join(' '))
+    return 0
   }
 
   const dryRun = options.n
@@ -97,8 +107,8 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
     debugOut(() => `${ago(targetTime)} and its most recent deps ${ago(lastDepsTime)}`)
     if (exec && (targetTime === 0 || targetTime < lastDepsTime)) {
       debugOut(() => targetTime === 0
-        ? `does not exist and has an exec`
-        : `is older than the most recent dep and has an exec`
+        ? 'does not exist and has an exec'
+        : 'is older than the most recent dep and has an exec'
       )
       const source = deps.length > 0 ? deps[0] : '***no-source***'
       const sources = deps.join(' ')
@@ -119,8 +129,8 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
       debugOut(() => !exec
         ? `target "${target}" has no exec`
         : (lastDepsTime === 0
-          ? `exists and there are no deps so ignoring exec`
-          : `is more recent than the most recent dep so ignoring exec`
+          ? 'exists and there are no deps so ignoring exec'
+          : 'is more recent than the most recent dep so ignoring exec'
         )
       )
     }
@@ -197,6 +207,10 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
       theConsole.log(bajelfile)
     }
     return 1
+  }
+  if (options.T) {
+    theConsole.log(Object.keys(bajelfile).join(' '))
+    return 0
   }
   if (options.p) {
     theConsole.log(bajelfile)

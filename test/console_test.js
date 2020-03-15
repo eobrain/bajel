@@ -20,6 +20,9 @@ test.serial('help text', async t => {
        usage: bajel[-n][-p][-h][target]
        -n  dry run
        -p  print out the expanded build file
+       -d  debug
+       -t  print out all explicit targets before % expansion
+       -T  print out all targets after % expansion
        -h  this help
        \n`)
     t.deepEqual(fakeStderr.toString(), '')
@@ -248,7 +251,7 @@ test.serial('print', async t => {
     )
 
     t.deepEqual(fakeStdout.toString(),
-      `{ foo: { exec: ': it executed' } }\n`)
+      '{ foo: { exec: \': it executed\' } }\n')
     t.deepEqual(fakeStderr.toString(), '')
     t.deepEqual(code, 0)
   } finally {
@@ -275,7 +278,7 @@ test.serial('bad deps with print', async t => {
             ' "deps": "string dep"\n' +
             '}\n')
     t.deepEqual(fakeStdout.toString(),
-      `{ foo: { deps: 'string dep' } }\n`)
+      '{ foo: { deps: \'string dep\' } }\n')
     t.deepEqual(code, 1)
   } finally {
     process.argv.pop()
