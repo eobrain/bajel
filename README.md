@@ -185,8 +185,6 @@ export default {
 
 ### build.md
 
-<iframe src="demo/colby/md/build.md"></iframe>
-
 <pre>
 # Markdown version of build file
 
