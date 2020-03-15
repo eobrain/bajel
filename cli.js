@@ -2,6 +2,7 @@
 
 const fs = require('fs')
 const build = require('./index.js')
+const markdown = require('./markdown.js')
 const yaml = require('js-yaml')
 const toml = require('toml')
 
@@ -32,6 +33,15 @@ const main = async () => {
         return (await import(mjsPath)).default
       } catch (e) {
         e['Error reading file'] = mjsPath
+        throw e
+      }
+    }
+    const mdPath = prefix + 'md'
+    if (fs.existsSync(mdPath)) {
+      try {
+        return (await markdown(mdPath))
+      } catch (e) {
+        e['Error reading file'] = mdPath
         throw e
       }
     }

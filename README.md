@@ -20,6 +20,7 @@ You can write the build file in your favorite format:
 * YAML if that's your thing
 * JSON if you want just the basics
 * JavaScript if you want to use variables for complex builds
+* Markdown if you like literate programming
 
 ## Installation
 
@@ -60,6 +61,7 @@ The build file must be one of the following names:
 * `build.json`
 * `build.cjs` (JavaScript, as a classic Node-JS module)
 * `build.mjs` (JavaScript, as a new-style ES6 module)
+* `build.md`
 
 All these different languages are alternate syntaxes of specifying the same
 underlying build file structure, as shown by the following examples (based on a
@@ -181,6 +183,36 @@ export default {
 }
 ```
 
+### build.md
+
+<iframe src="demo/colby/md/build.md"></iframe>
+
+<pre>
+# Markdown version of build file
+
+## %.o
+
+Deps: `%.c` `hellomake.h`
+
+```sh
+gcc -c -o $@ $< -I.
+```
+
+## hellomake
+
+Deps: `hellomake.o` `hellofunc.o`
+
+```sh
+gcc -o $@ $+ -I.
+```
+
+## clean
+
+```sh
+rm -f hellomake hellomake.o hellofunc.o
+```
+</pre>
+
 ### Real world examples
 
 * Diagmap's [build.toml][5] is a fairly straightforward build file in TOML
@@ -227,6 +259,10 @@ The `exec` string may have some special patterns:
 (If you are familiar with makefiles you will note that the semantics are the
 same, though much simplified.)
 
+## Notes
+
+The idea of using markdown came from [maid][3].
+
 ## Legal
 
 Copyright (c) 2020 Eamonn O'Brien-Strain All rights reserved. This
@@ -239,3 +275,4 @@ http://www.eclipse.org/legal/epl-v10.html
 
 [1]: bajel.jpg
 [2]: http://www.cs.colby.edu/maxwell/courses/tutorials/maketutor/
+[3]: https://github.com/egoist/maid
