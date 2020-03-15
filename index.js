@@ -1,13 +1,16 @@
 const { spawn } = require('child_process')
 const getopts = require('getopts')
-const { Console } = require('console')
 const Percent = require('./percent.js')
+const StrConsole = require('./teeconsole.js')
 const { timestamp, walkDir } = require('./fs_util.js')
 
 // const trace = x => console.x || x
 
-module.exports = async (bajelfile, stdout = process.stdout, stderr = process.stderr) => {
-  const theConsole = new Console(stdout, stderr)
+/**
+ * @returns [errorCode, stdoutString, stderrString]
+ */
+module.exports = async (bajelfile) => {
+  const { tConsole, tStdout, tStderr } = StrConsole()
   const options = getopts(process.argv.slice(2), {
     boolean: ['n', 'p', 'd', 'h'],
     alias: {
@@ -20,7 +23,7 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
     }
   })
   if (options.help) {
-    theConsole.log(`
+    tConsole.log(`
        usage: bajel[-n][-p][-h][target]
        -n  dry run
        -p  print out the expanded build file
@@ -29,19 +32,19 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
        -T  print out all targets after % expansion
        -h  this help
        `)
-    return 0
+    return [0, tStdout(), tStderr()]
   }
 
   const explicitTargets = Object.keys(bajelfile).filter(k => !k.includes('%'))
   if (explicitTargets.length === 0) {
     const targetsStr = JSON.stringify(Object.keys(bajelfile))
-    theConsole.error(`No explicit targets in ${targetsStr}`)
-    return 1
+    tConsole.error(`No explicit targets in ${targetsStr}`)
+    return [1, tStdout(), tStderr()]
   }
 
   if (options.t) {
-    theConsole.log(explicitTargets.join(' '))
-    return 0
+    tConsole.log(explicitTargets.join(' '))
+    return [0, tStdout(), tStderr()]
   }
 
   const dryRun = options.n
@@ -53,17 +56,17 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
 
   const printAndExec = cmd => new Promise(resolve => {
     const trimmed = shellTrim(cmd.join ? cmd.join(' ') : cmd)
-    theConsole.log(trimmed)
+    tConsole.log(trimmed)
     if (dryRun) {
       resolve(0)
       return
     }
     const process = spawn(trimmed, [], { shell: true })
-    process.stdout.on('data', data => { theConsole.log(data.toString()) })
-    process.stderr.on('data', data => { theConsole.error(data.toString()) })
+    process.stdout.on('data', data => { tConsole.log(data.toString()) })
+    process.stderr.on('data', data => { tConsole.error(data.toString()) })
     process.on('exit', code => {
       if (code !== 0) {
-        theConsole.error(`FAILED with code ${code}: \n${trimmed}\n`)
+        tConsole.error(`FAILED with code ${code}: \n${trimmed}\n`)
       }
       resolve(code)
     })
@@ -76,14 +79,14 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
   const recurse = async target => {
     const debugOut = f => {
       if (options.debug) {
-        theConsole.log(`target "${target}" ${f()}`)
+        tConsole.log(`target "${target}" ${f()}`)
       }
     }
 
     let execHappened = false
     const targetTime = await timestamp(target)
     if (!bajelfile[target] && targetTime === 0) {
-      theConsole.warn(target,
+      tConsole.warn(target,
         'is not a file and is not one of the build targets:',
         Object.keys(bajelfile).sort())
       return [1]
@@ -122,7 +125,7 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
       const code = await printAndExec(substitutedExec)
       execHappened = true
       if (code !== 0) {
-        theConsole.error('FAILED  ', target, ':', deps.join(' '))
+        tConsole.error('FAILED  ', target, ':', deps.join(' '))
         return [code]
       }
     } else {
@@ -184,15 +187,15 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
         }
       }
       if (!matchHappened) {
-        theConsole.warn(`No match for "${target}"`)
+        tConsole.warn(`No match for "${target}"`)
       }
     }
     toRemove.forEach(target => { delete bajelfile[target] })
     for (const target in toAdd) {
       if (bajelfile[target]) {
-        theConsole.warn('Duplicate targets')
-        theConsole.warn(`"${target}": ${JSON.stringify(bajelfile[target])}`)
-        theConsole.warn(`"${target}": ${JSON.stringify(toAdd[target])}`)
+        tConsole.warn('Duplicate targets')
+        tConsole.warn(`"${target}": ${JSON.stringify(bajelfile[target])}`)
+        tConsole.warn(`"${target}": ${JSON.stringify(toAdd[target])}`)
       }
       bajelfile[target] = toAdd[target]
     }
@@ -202,19 +205,19 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
   try {
     while (expandDeps()) { }
   } catch (e) {
-    theConsole.error('Problem expanding percents: ' + e)
+    tConsole.error('Problem expanding percents: ' + e)
     if (options.p) {
-      theConsole.log(bajelfile)
+      tConsole.log(bajelfile)
     }
-    return 1
+    return [1, tStdout(), tStderr()]
   }
   if (options.T) {
-    theConsole.log(Object.keys(bajelfile).join(' '))
-    return 0
+    tConsole.log(Object.keys(bajelfile).join(' '))
+    return [0, tStdout(), tStderr()]
   }
   if (options.p) {
-    theConsole.log(bajelfile)
-    return 0
+    tConsole.log(bajelfile)
+    return [0, tStdout(), tStderr()]
   }
 
   const t0 = Date.now()
@@ -247,22 +250,22 @@ module.exports = async (bajelfile, stdout = process.stdout, stderr = process.std
     const [code, ts, execHappened] = await recurse(start)
 
     if (code !== 0) {
-      theConsole.error(`bajel: recipe for target '${start}' failed\nbajel: *** [error] Error ${code}`)
-      return code
+      tConsole.error(`bajel: recipe for target '${start}' failed\nbajel: *** [error] Error ${code}`)
+      return [code, tStdout(), tStderr()]
     }
     if (dryRun) {
-      return 0
+      return [0, tStdout(), tStderr()]
     }
     const phony = (await timestamp(start) === 0)
     if (phony && !execHappened) {
-      theConsole.log(`bajel: Nothing to be done for "${start}".`)
+      tConsole.log(`bajel: Nothing to be done for "${start}".`)
     }
     if (!phony && !execHappened) {
-      theConsole.log(`bajel: '${start}' is up to date. (${ago(ts)})`)
+      tConsole.log(`bajel: '${start}' is up to date. (${ago(ts)})`)
     }
-    return 0
+    return [0, tStdout(), tStderr()]
   } catch (e) {
-    theConsole.error(e.toString())
-    return 1
+    tConsole.error(e.toString())
+    return [1, tStdout(), tStderr()]
   }
 }
