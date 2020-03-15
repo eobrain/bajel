@@ -9,7 +9,7 @@ const exec = `
 
 module.exports = {
 
-  all: { deps: ['toml', 'json', 'yaml', 'cjs' , 'mjs'] },
+  all: { deps: ['toml', 'json', 'yaml', 'cjs', 'mjs'] },
 
   toml: { exec },
   json: { exec },

@@ -71,7 +71,6 @@ const main = async () => {
       }
     }
     throw new Error('ERROR: No build file.')
-    
   }
 
   try {
@@ -84,4 +83,4 @@ const main = async () => {
 
 module.exports = main // for testing
 
-main().then(code =>  process.exit(code))
+main().then(code => process.exit(code))
