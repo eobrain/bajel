@@ -1,7 +1,7 @@
 const test = require('ava')
 const build = require('../index.js')
 const fs = require('fs')
-const { buildFileTree } = require('./_test_helper.js')
+const { buildFileTree, writeTmpFile } = require('./_test_helper.js')
 
 test('happy path', async t => {
   const [code, stdout, stderr] = await build(
@@ -351,13 +351,11 @@ test.serial('targets after expansion', async t => {
 })
 
 test('existing file', async t => {
-  const folder = await buildFileTree({
-    aaa: 'AAA'
-  })
+  const [folder, path] = await writeTmpFile('AAA')
   try {
     const [code, stdout, stderr] = await build(
       {
-        [`${folder}/aaa`]: {
+        [path]: {
           exec: ': for aaa'
         }
       }
