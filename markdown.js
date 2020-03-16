@@ -16,18 +16,18 @@ module.exports = path => new Promise((resolve, reject) => {
   let lineno = 0
   let target
   let inExec = false
-  let exec
+  let execLines = []
   myInterface.on('line', line => {
     lineno++
 
     if (inExec) {
       if (line.match(execEndPattern)) {
-        bajelfile[target].exec = exec
+        bajelfile[target].exec = execLines.join('\n')
         inExec = false
-        exec = undefined
+        execLines = []
         return
       }
-      exec += line
+      execLines.push(line)
     }
 
     const targetMatch = line.match(targetPattern)
@@ -53,7 +53,7 @@ module.exports = path => new Promise((resolve, reject) => {
         reject(new Error(`${path}:${lineno}: Exec without a target:\n${line}`))
         return
       }
-      exec = ''
+      execLines = []
       inExec = true
     }
   })

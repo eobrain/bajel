@@ -1,6 +1,7 @@
 const test = require('ava')
 const build = require('../index.js')
 const fs = require('fs')
+const { buildFileTree } = require('./_test_helper.js')
 
 test.serial('help text', async t => {
   process.argv.push('-h')
@@ -278,5 +279,130 @@ test.serial('targets after expansion', async t => {
     t.deepEqual(code, 0)
   } finally {
     process.argv.pop()
+  }
+})
+
+test('existing file', async t => {
+  const folder = await buildFileTree({
+    aaa: 'AAA'
+  })
+  try {
+    const [code, stdout, stderr] = await build(
+      {
+        [`${folder}/aaa`]: {
+          exec: ': for aaa'
+        }
+      }
+    )
+
+    const out = stdout + stderr
+    t.regex(out, /bajel: .+ is up to date. .modified [0-9.]+m?s ago./)
+    t.deepEqual(0, code)
+  } finally {
+    fs.rmdirSync(folder, { recursive: true })
+  }
+})
+
+test('seconds old existing file', async t => {
+  const folder = await buildFileTree({})
+  try {
+    await build(
+      {
+        [`${folder}/bbb`]: {
+          exec: 'touch --date "5 seconds ago" $@'
+        }
+      }
+    )
+    const [code, stdout, stderr] = await build(
+      {
+        [`${folder}/bbb`]: {
+          exec: ': for bbb'
+        }
+      }
+    )
+
+    const out = stdout + stderr
+    t.regex(out, /bajel: .+ is up to date. .modified [0-9.]+s ago./)
+    t.deepEqual(0, code)
+  } finally {
+    fs.rmdirSync(folder, { recursive: true })
+  }
+})
+
+test('minutes old existing file', async t => {
+  const folder = await buildFileTree({})
+  try {
+    await build(
+      {
+        [`${folder}/bbb`]: {
+          exec: 'touch --date "5 minutes ago" $@'
+        }
+      }
+    )
+    const [code, stdout, stderr] = await build(
+      {
+        [`${folder}/bbb`]: {
+          exec: ': for bbb'
+        }
+      }
+    )
+
+    const out = stdout + stderr
+    t.regex(out, /bajel: .+ is up to date. .modified [0-9.]+ min ago./)
+    t.deepEqual(0, code)
+  } finally {
+    fs.rmdirSync(folder, { recursive: true })
+  }
+})
+
+test('hours old existing file', async t => {
+  const folder = await buildFileTree({})
+  try {
+    await build(
+      {
+        [`${folder}/bbb`]: {
+          exec: 'touch --date "5 hours ago" $@'
+        }
+      }
+    )
+    const [code, stdout, stderr] = await build(
+      {
+        [`${folder}/bbb`]: {
+          exec: ': for bbb'
+        }
+      }
+    )
+
+    const out = stdout + stderr
+    t.regex(out, /bajel: .+ is up to date. .modified [0-9.]+ hours ago./)
+    t.deepEqual(0, code)
+  } finally {
+    fs.rmdirSync(folder, { recursive: true })
+  }
+})
+
+test('very old existing file', async t => {
+  const folder = await buildFileTree({})
+  try {
+    await build(
+      {
+        [`${folder}/bbb`]: {
+          exec: 'touch --date "1 year ago" $@'
+        }
+      }
+    )
+    const [code, stdout, stderr] = await build(
+      {
+        [`${folder}/bbb`]: {
+          exec: ': for bbb'
+        }
+      }
+    )
+
+    const out = stdout + stderr
+    t.regex(out, /bajel: .+ is up to date. .modified [0-9.]+ days ago./)
+    t.deepEqual(0, code)
+  } finally {
+    fs.rmdirSync(folder, { recursive: true })
   }
 })
