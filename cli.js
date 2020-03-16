@@ -74,7 +74,7 @@ const main = async () => {
   }
 
   try {
-    const [code] = build(await bajelfile())
+    const [code] = await build(await bajelfile())
     return code
   } catch (e) {
     console.error(e)

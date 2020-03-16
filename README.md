@@ -146,7 +146,7 @@ module.exports = {
 
   hellomake: {
     deps: OBJ,
-    exec: `${CC} -o  $@ $+ ${CFLAGS}`
+    exec: `${CC} -o $@ $+ ${CFLAGS}`
   },
 
   clean: {
@@ -173,7 +173,7 @@ export default {
 
   hellomake: {
     deps: OBJ,
-    exec: `${CC} -o  $@ $+ ${CFLAGS}`
+    exec: `${CC} -o $@ $+ ${CFLAGS}`
   },
 
   clean: {
