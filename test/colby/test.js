@@ -98,6 +98,7 @@ test.serial('One file updated', async t => {
   await build(bajelfile)
   await sleep(100)
   touch('hellomake.c')
+  await sleep(100)
   const [code, stdout, stderr] = await build(bajelfile)
 
   t.deepEqual(stdout,

@@ -1,7 +1,35 @@
 const test = require('ava')
 const build = require('../index.js')
 const fs = require('fs')
+const { buildFileTree, writeTmpFile } = require('./_test_helper.js')
 
+test('happy path', async t => {
+  const [code, stdout, stderr] = await build(
+    {
+      a: {
+        deps: ['b'],
+        exec: 'echo aaa'
+      },
+      b: {
+        deps: ['c'],
+        exec: 'echo bbb >&2' // echo to stderr
+      },
+      c: {
+        exec: 'echo ccc'
+      }
+    }
+  )
+
+  t.deepEqual(stdout,
+    'echo ccc\n' +
+    'ccc\n\n' +
+    'echo bbb >&2\n' +
+    'echo aaa\n' +
+    'aaa\n\n'
+  )
+  t.deepEqual(stderr, 'bbb\n\n')
+  t.deepEqual(code, 0)
+})
 test.serial('help text', async t => {
   process.argv.push('-h')
   try {
@@ -117,6 +145,29 @@ test.serial('bad exec debug', async t => {
   }
 })
 
+test.serial('missing exec debug', async t => {
+  process.argv.push('-d')
+  try {
+    const [code, stdout, stderr] = await build(
+      {
+        start: { deps: ['noop'] },
+        noop: { }
+      }
+    )
+
+    t.deepEqual(stdout,
+      'target "noop" does not exist and its most recent deps does not exist\n' +
+      'target "noop" has no exec\n' +
+      'target "start" does not exist and its most recent deps does not exist\n' +
+      'target "start" has no exec\n' +
+      'bajel: Nothing to be done for "start".\n')
+    t.deepEqual(stderr, '')
+    t.deepEqual(code, 0)
+  } finally {
+    process.argv.pop()
+  }
+})
+
 test.serial('no match', async t => {
   const [code, stdout, stderr] = await build(
     {
@@ -210,6 +261,24 @@ test.serial('print', async t => {
   }
 })
 
+test.serial('non default', async t => {
+  process.argv.push('second')
+  try {
+    const [code, stdout, stderr] = await build(
+      {
+        first: { exec: ': first executed' },
+        second: { exec: ': second executed' }
+      }
+    )
+
+    t.deepEqual(stdout, ': second executed\n')
+    t.deepEqual(stderr, '')
+    t.deepEqual(code, 0)
+  } finally {
+    process.argv.pop()
+  }
+})
+
 test.serial('bad deps with print', async t => {
   process.argv.push('-p')
   try {
@@ -278,5 +347,128 @@ test.serial('targets after expansion', async t => {
     t.deepEqual(code, 0)
   } finally {
     process.argv.pop()
+  }
+})
+
+test('existing file', async t => {
+  const [folder, path] = await writeTmpFile('AAA')
+  try {
+    const [code, stdout, stderr] = await build(
+      {
+        [path]: {
+          exec: ': for aaa'
+        }
+      }
+    )
+
+    const out = stdout + stderr
+    t.regex(out, /bajel: .+ is up to date. .modified [0-9.]+m?s ago./)
+    t.deepEqual(0, code)
+  } finally {
+    fs.rmdirSync(folder, { recursive: true })
+  }
+})
+
+test('seconds old existing file', async t => {
+  const folder = await buildFileTree({})
+  try {
+    await build(
+      {
+        [`${folder}/bbb`]: {
+          exec: 'touch --date "5 seconds ago" $@'
+        }
+      }
+    )
+    const [code, stdout, stderr] = await build(
+      {
+        [`${folder}/bbb`]: {
+          exec: ': for bbb'
+        }
+      }
+    )
+
+    const out = stdout + stderr
+    t.regex(out, /bajel: .+ is up to date. .modified [0-9.]+s ago./)
+    t.deepEqual(0, code)
+  } finally {
+    fs.rmdirSync(folder, { recursive: true })
+  }
+})
+
+test('minutes old existing file', async t => {
+  const folder = await buildFileTree({})
+  try {
+    await build(
+      {
+        [`${folder}/bbb`]: {
+          exec: 'touch --date "5 minutes ago" $@'
+        }
+      }
+    )
+    const [code, stdout, stderr] = await build(
+      {
+        [`${folder}/bbb`]: {
+          exec: ': for bbb'
+        }
+      }
+    )
+
+    const out = stdout + stderr
+    t.regex(out, /bajel: .+ is up to date. .modified [0-9.]+ min ago./)
+    t.deepEqual(0, code)
+  } finally {
+    fs.rmdirSync(folder, { recursive: true })
+  }
+})
+
+test('hours old existing file', async t => {
+  const folder = await buildFileTree({})
+  try {
+    await build(
+      {
+        [`${folder}/bbb`]: {
+          exec: 'touch --date "5 hours ago" $@'
+        }
+      }
+    )
+    const [code, stdout, stderr] = await build(
+      {
+        [`${folder}/bbb`]: {
+          exec: ': for bbb'
+        }
+      }
+    )
+
+    const out = stdout + stderr
+    t.regex(out, /bajel: .+ is up to date. .modified [0-9.]+ hours ago./)
+    t.deepEqual(0, code)
+  } finally {
+    fs.rmdirSync(folder, { recursive: true })
+  }
+})
+
+test('very old existing file', async t => {
+  const folder = await buildFileTree({})
+  try {
+    await build(
+      {
+        [`${folder}/bbb`]: {
+          exec: 'touch --date "1 year ago" $@'
+        }
+      }
+    )
+    const [code, stdout, stderr] = await build(
+      {
+        [`${folder}/bbb`]: {
+          exec: ': for bbb'
+        }
+      }
+    )
+
+    const out = stdout + stderr
+    t.regex(out, /bajel: .+ is up to date. .modified [0-9.]+ days ago./)
+    t.deepEqual(0, code)
+  } finally {
+    fs.rmdirSync(folder, { recursive: true })
   }
 })

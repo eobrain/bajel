@@ -55,7 +55,7 @@ module.exports = async (bajelfile) => {
   const shellTrim = cmd => cmd.split('\n').map(s => s.trim()).join('\n')
 
   const printAndExec = cmd => new Promise(resolve => {
-    const trimmed = shellTrim(cmd.join ? cmd.join(' ') : cmd)
+    const trimmed = shellTrim(cmd)
     tConsole.log(trimmed)
     if (dryRun) {
       resolve(0)
@@ -130,7 +130,7 @@ module.exports = async (bajelfile) => {
       }
     } else {
       debugOut(() => !exec
-        ? `target "${target}" has no exec`
+        ? 'has no exec'
         : (lastDepsTime === 0
           ? 'exists and there are no deps so ignoring exec'
           : 'is more recent than the most recent dep so ignoring exec'
