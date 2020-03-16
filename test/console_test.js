@@ -3,6 +3,33 @@ const build = require('../index.js')
 const fs = require('fs')
 const { buildFileTree } = require('./_test_helper.js')
 
+test('happy path', async t => {
+  const [code, stdout, stderr] = await build(
+    {
+      a: {
+        deps: ['b'],
+        exec: 'echo aaa'
+      },
+      b: {
+        deps: ['c'],
+        exec: 'echo bbb >&2' // echo to stderr
+      },
+      c: {
+        exec: 'echo ccc'
+      }
+    }
+  )
+
+  t.deepEqual(stdout,
+    'echo ccc\n' +
+    'ccc\n\n' +
+    'echo bbb >&2\n' +
+    'echo aaa\n' +
+    'aaa\n\n'
+  )
+  t.deepEqual(stderr, 'bbb\n\n')
+  t.deepEqual(code, 0)
+})
 test.serial('help text', async t => {
   process.argv.push('-h')
   try {
@@ -118,6 +145,29 @@ test.serial('bad exec debug', async t => {
   }
 })
 
+test.serial('missing exec debug', async t => {
+  process.argv.push('-d')
+  try {
+    const [code, stdout, stderr] = await build(
+      {
+        start: { deps: ['noop'] },
+        noop: { }
+      }
+    )
+
+    t.deepEqual(stdout,
+      'target "noop" does not exist and its most recent deps does not exist\n' +
+      'target "noop" has no exec\n' +
+      'target "start" does not exist and its most recent deps does not exist\n' +
+      'target "start" has no exec\n' +
+      'bajel: Nothing to be done for "start".\n')
+    t.deepEqual(stderr, '')
+    t.deepEqual(code, 0)
+  } finally {
+    process.argv.pop()
+  }
+})
+
 test.serial('no match', async t => {
   const [code, stdout, stderr] = await build(
     {
@@ -204,6 +254,24 @@ test.serial('print', async t => {
 
     t.deepEqual(stdout,
       '{ foo: { exec: \': it executed\' } }\n')
+    t.deepEqual(stderr, '')
+    t.deepEqual(code, 0)
+  } finally {
+    process.argv.pop()
+  }
+})
+
+test.serial('non default', async t => {
+  process.argv.push('second')
+  try {
+    const [code, stdout, stderr] = await build(
+      {
+        first: { exec: ': first executed' },
+        second: { exec: ': second executed' }
+      }
+    )
+
+    t.deepEqual(stdout, ': second executed\n')
     t.deepEqual(stderr, '')
     t.deepEqual(code, 0)
   } finally {
