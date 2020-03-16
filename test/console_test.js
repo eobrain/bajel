@@ -244,3 +244,39 @@ test.serial('exception', async t => {
     'TypeError: exec of target "foo" should be a string\n')
   t.deepEqual(code, 1)
 })
+
+test.serial('targets before expansion', async t => {
+  process.argv.push('-t')
+  try {
+    const [code, stdout, stderr] = await build(
+      {
+        '%.foo': { deps: ['%.bar'] },
+        main: { exec: ': it executed' }
+      }
+    )
+
+    t.deepEqual(stdout, 'main\n')
+    t.deepEqual(stderr, '')
+    t.deepEqual(code, 0)
+  } finally {
+    process.argv.pop()
+  }
+})
+
+test.serial('targets after expansion', async t => {
+  process.argv.push('-T')
+  try {
+    const [code, stdout, stderr] = await build(
+      {
+        '%.foo': { deps: ['%.bar'] },
+        main: { exec: ': it executed' }
+      }
+    )
+
+    t.deepEqual(stdout, 'main test/colby/hellofunc.foo\n')
+    t.deepEqual(stderr, '')
+    t.deepEqual(code, 0)
+  } finally {
+    process.argv.pop()
+  }
+})
