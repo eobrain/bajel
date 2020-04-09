@@ -20,13 +20,17 @@ test('happy path', async t => {
     }
   )
 
-  t.deepEqual(stdout,
-    'echo ccc\n' +
-    'ccc\n\n' +
-    'echo bbb >&2\n' +
-    'echo aaa\n' +
-    'aaa\n\n'
-  )
+  const actualSorted = stdout.split(/\n+/).sort()
+  const expectedSorted = [
+    '',
+    'echo ccc',
+    'ccc',
+    'echo bbb >&2',
+    'echo aaa',
+    'aaa'
+  ].sort()
+
+  t.deepEqual(actualSorted, expectedSorted)
   t.deepEqual(stderr, 'bbb\n\n')
   t.deepEqual(code, 0)
 })

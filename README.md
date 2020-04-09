@@ -60,12 +60,13 @@ The build file must be one of the following names:
 * `build.yaml`
 * `build.json`
 * `build.cjs` (JavaScript, as a classic Node-JS module)
-* `build.mjs` (JavaScript, as a new-style ES6 module)
+* `build.mjs` (JavaScript, as a new-style ES6 module -- Node version 13.2.0 or later)
 * `build.md`
 
 All these different languages are alternate syntaxes of specifying the same
 underlying build file structure, as shown by the following examples (based on a
 [makefile example][2]), each of which specify the same thing.
+(Though the JavaScript examples additionally show how variables can be used.)
 
 ## Examples
 
@@ -131,6 +132,8 @@ clean:
 
 ### build.cjs
 
+(This JavaScript module format supported with all versions of Node.)
+
 ```js
 const CC = 'gcc'
 const CFLAGS = '-I.'
@@ -157,6 +160,8 @@ module.exports = {
 ```
 
 ### build.mjs
+
+(This JavaScript module format is only supported if your version of Node is 13.2.0 or later.)
 
 ```js
 const CC = 'gcc'
