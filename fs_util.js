@@ -13,6 +13,9 @@ const timestamp = path =>
  */
 const walkDir = (dir, callback) => {
   fs.readdirSync(dir).forEach(f => {
+    if (f.startsWith('.') || f === 'node_modules') {
+      return
+    }
     const dirPath = path.join(dir, f)
     if (fs.statSync(dirPath).isDirectory()) {
       walkDir(dirPath, callback)

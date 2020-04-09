@@ -74,7 +74,7 @@ module.exports = async (bajelfile) => {
 
   /**
  * @param {string} target being built
- * @returns {[errorCode, number, execHappened]} whether succeeded and timestamp in ms of latest file change
+ * @returns {[errorCode, number, recipeHappened]} whether succeeded and timestamp in ms of latest file change
  * */
   const recurse = async target => {
     const debugOut = f => {
@@ -83,7 +83,7 @@ module.exports = async (bajelfile) => {
       }
     }
 
-    let execHappened = false
+    let recipeHappened = false
     const targetTime = await timestamp(target)
     if (!bajelfile[target] && targetTime === 0) {
       tConsole.warn(target,
@@ -94,10 +94,11 @@ module.exports = async (bajelfile) => {
     const task = bajelfile[target] || {}
     const deps = task.deps || []
     const exec = task.exec
+    const call = task.call
     let lastDepsTime = 0
     for (let i = 0; i < deps.length; ++i) {
-      const [depCode, depTime, depExecHappened] = await recurse(deps[i])
-      execHappened = execHappened || depExecHappened
+      const [depCode, depTime, depRecipeHappened] = await recurse(deps[i])
+      recipeHappened = recipeHappened || depRecipeHappened
       if (depCode !== 0) {
         debugOut(() => `-- execution of dep target "${deps[i]}" failed. Stopping.`)
         return [depCode]
@@ -108,37 +109,45 @@ module.exports = async (bajelfile) => {
     }
 
     debugOut(() => `${ago(targetTime)} and its most recent deps ${ago(lastDepsTime)}`)
-    if (exec && (targetTime === 0 || targetTime < lastDepsTime)) {
+    const hasRecipe = exec || call
+    if (hasRecipe && (targetTime === 0 || targetTime < lastDepsTime)) {
       debugOut(() => targetTime === 0
-        ? 'does not exist and has an exec'
-        : 'is older than the most recent dep and has an exec'
+        ? 'does not exist and has a recipe'
+        : 'is older than the most recent dep and has a recipe'
       )
       const source = deps.length > 0 ? deps[0] : '***no-source***'
       const sources = deps.join(' ')
-      if (!exec.replace) {
-        throw new TypeError(`exec of target "${target}" should be a string`)
-      }
-      const substitutedExec = exec
-        .replace(/\$@/g, target)
-        .replace(/\$</g, source)
-        .replace(/\$\+/g, sources)
-      const code = await printAndExec(substitutedExec)
-      execHappened = true
-      if (code !== 0) {
-        tConsole.error('FAILED  ', target, ':', deps.join(' '))
-        return [code]
+      if (call) {
+        const echo = tConsole.log
+        call({ target, source, sources, echo })
+        recipeHappened = true
+      } else {
+        // exec
+        if (!exec.replace) {
+          throw new TypeError(`exec of target "${target}" should be a string`)
+        }
+        const substitutedExec = exec
+          .replace(/\$@/g, target)
+          .replace(/\$</g, source)
+          .replace(/\$\+/g, sources)
+        const code = await printAndExec(substitutedExec)
+        recipeHappened = true
+        if (code !== 0) {
+          tConsole.error('FAILED  ', target, ':', deps.join(' '))
+          return [code]
+        }
       }
     } else {
-      debugOut(() => !exec
-        ? 'has no exec'
+      debugOut(() => !hasRecipe
+        ? 'has no recipe'
         : (lastDepsTime === 0
-          ? 'exists and there are no deps so ignoring exec'
-          : 'is more recent than the most recent dep so ignoring exec'
+          ? 'exists and there are no deps so ignoring recipe'
+          : 'is more recent than the most recent dep so ignoring reccipe'
         )
       )
     }
     const updatedTime = Math.max(lastDepsTime, await timestamp(target))
-    return [0, updatedTime, execHappened]
+    return [0, updatedTime, recipeHappened]
   }
 
   const expandDeps = () => {
@@ -148,6 +157,7 @@ module.exports = async (bajelfile) => {
     const toRemove = []
     let expansionHappened = false
     for (const target in bajelfile) {
+      // console.log('target=', target)
       const task = bajelfile[target]
       let deps = task.deps || []
       if (!deps.filter) {
@@ -173,15 +183,33 @@ module.exports = async (bajelfile) => {
       for (const file of [...files, ...Object.keys(bajelfile)]) {
         const match = from.match(file)
         if (match) {
+          // console.log(`${from}.match(${file}) --> ${match}`)
           const expand = x => x.split('%').join(match)
+          const expandedTarget = expand(target)
+          // console.log('expandedTarget=', expandedTarget)
+          /*if (bajelfile[expandedTarget]) {
+            tConsole.warn('Recursion')
+            tConsole.warn(`"${target}": ${JSON.stringify(bajelfile[target])}`)
+            tConsole.warn(`"${target}": ${JSON.stringify(toAdd[target])}`)
+            continue
+          }*/
           matchHappened = expansionHappened = true
           toRemove.push(target)
           const expandedTask = {}
           if (deps) {
             expandedTask.deps = [file, ...deps.map(expand)]
           }
+          for (const expandedDep of expandedTask.deps) {
+            if (bajelfile[expandedDep]) {
+              throw new Error(
+                `Target "${expandedTarget}" Infinite loop: ${JSON.stringify(expandedTask.deps)}`)
+            }
+          }
           if (task.exec) {
             expandedTask.exec = expand(task.exec)
+          }
+          if (task.call) {
+            expandedTask.call = $ => task.call({ ...$, match })
           }
           toAdd[expand(target)] = expandedTask
         }
@@ -247,7 +275,7 @@ module.exports = async (bajelfile) => {
   }
 
   try {
-    const [code, ts, execHappened] = await recurse(start)
+    const [code, ts, recipeHappened] = await recurse(start)
 
     if (code !== 0) {
       tConsole.error(`bajel: recipe for target '${start}' failed\nbajel: *** [error] Error ${code}`)
@@ -257,10 +285,10 @@ module.exports = async (bajelfile) => {
       return [0, tStdout(), tStderr()]
     }
     const phony = (await timestamp(start) === 0)
-    if (phony && !execHappened) {
+    if (phony && !recipeHappened) {
       tConsole.log(`bajel: Nothing to be done for "${start}".`)
     }
-    if (!phony && !execHappened) {
+    if (!phony && !recipeHappened) {
       tConsole.log(`bajel: '${start}' is up to date. (${ago(ts)})`)
     }
     return [0, tStdout(), tStderr()]
