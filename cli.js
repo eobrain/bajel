@@ -5,6 +5,7 @@ const build = require('./index.js')
 const markdown = require('./markdown.js')
 const yaml = require('js-yaml')
 const toml = require('toml')
+const semver = require('semver')
 
 const main = async () => {
   const prefix = process.cwd() + '/build.'
@@ -23,16 +24,21 @@ const main = async () => {
       try {
         return require(cjsPath)
       } catch (e) {
-        e['Error reading file'] = cjsPath
+        e.readingFile = cjsPath
         throw e
       }
     }
     const mjsPath = prefix + 'mjs'
     if (fs.existsSync(mjsPath)) {
+      const VERSION_REQUIREMENT = '>=13.2.0'
+      if (!semver.satisfies(process.version, VERSION_REQUIREMENT)) {
+        throw new Error(`Need Node ${VERSION_REQUIREMENT} to use .mjs files (ES6 modules). Current version is ${process.version}.`)
+      }
+
       try {
         return (await import(mjsPath)).default
       } catch (e) {
-        e['Error reading file'] = mjsPath
+        e.readingFile = mjsPath
         throw e
       }
     }
@@ -41,7 +47,7 @@ const main = async () => {
       try {
         return (await markdown(mdPath))
       } catch (e) {
-        e['Error reading file'] = mdPath
+        e.readingFile = mdPath
         throw e
       }
     }
@@ -58,7 +64,7 @@ const main = async () => {
       try {
         return JSON.parse(jsonText)
       } catch (e) {
-        e['Error reading file'] = jsonPath
+        e.readingFile = jsonPath
         throw e
       }
     }
@@ -77,7 +83,8 @@ const main = async () => {
     const [code] = await build(await bajelfile())
     return code
   } catch (e) {
-    console.error(e)
+    const fileMessage = e.readingFile ? ` reading file ${e.readingFile}` : ''
+    console.error(`ERROR${fileMessage}: ${e.message}`)
     return 1
   }
 }
