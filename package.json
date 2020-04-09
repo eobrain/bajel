@@ -1,6 +1,6 @@
 {
   "name": "bajel",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "description": "A build system modelled on make.",
   "main": "index.js",
   "bin": {
