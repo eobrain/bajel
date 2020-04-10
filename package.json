@@ -1,6 +1,6 @@
 {
   "name": "bajel",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "description": "A build system modelled on make.",
   "main": "index.js",
   "bin": {
@@ -27,6 +27,7 @@
     "install": "^0.13.0",
     "js-yaml": "^3.13.1",
     "remove": "^0.1.5",
+    "semver": "^7.2.1",
     "toml": "^3.0.0"
   },
   "devDependencies": {
