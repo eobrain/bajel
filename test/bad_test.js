@@ -24,9 +24,7 @@ test.serial('self infinite loop', async t => {
   )
 
   t.deepEqual(stderr,
-    'deps "foo" of target "foo" causes an infinite loop.\n' +
-            'bajel: recipe for target \'foo\' failed\n' +
-            'bajel: *** [error] Error 1\n')
+    'Error: infinite loop foo → foo\n')
   t.deepEqual(stdout, '')
   t.deepEqual(code, 1)
 })
@@ -41,9 +39,7 @@ test.serial('indirect infinite loop', async t => {
   )
 
   t.deepEqual(stderr,
-    'deps "aaa" of target "ccc" causes an infinite loop.\n' +
-              'bajel: recipe for target \'ccc\' failed\n' +
-              'bajel: *** [error] Error 1\n')
+    'Error: infinite loop aaa → bbb → ccc → aaa\n')
   t.deepEqual(stdout, '')
   t.deepEqual(code, 1)
 })
@@ -58,10 +54,7 @@ test.serial('expansion self infinite loop', async t => {
 
   t.deepEqual(stdout, '')
   t.deepEqual(stderr,
-    'Problem expanding percents: Error: Infinite loop\n' +
-            '"test/colby/hellofunc.bar":{\n' +
-            ' "deps": ["test/colby/hellofunc.bar"]\n' +
-            '}\n')
+    'Problem expanding percents: Error: infinite loop after expansion test/colby/hellofunc.bar → test/colby/hellofunc.bar\n')
   t.deepEqual(code, 1)
 })
 test.serial('expansion infinite loop', async t => {
@@ -74,7 +67,7 @@ test.serial('expansion infinite loop', async t => {
 
   t.deepEqual(stdout, '')
   t.deepEqual(stderr,
-    'Problem expanding percents: Error: Target "test/colby/hellofunc.bar" Infinite loop: ["test/colby/hellofunc.c"]\n')
+    'Problem expanding percents: Error: infinite loop after expansion test/colby/hellofunc.bar → test/colby/hellofunc.c\n')
   t.deepEqual(code, 1)
 })
 

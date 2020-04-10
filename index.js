@@ -76,7 +76,7 @@ module.exports = async (bajelfile) => {
  * @param {string} target being built
  * @returns {[errorCode, number, recipeHappened]} whether succeeded and timestamp in ms of latest file change
  * */
-  const recurse = async target => {
+  const recurse = async (prevTargets, target) => {
     const debugOut = f => {
       if (options.debug) {
         tConsole.log(`target "${target}" ${f()}`)
@@ -92,12 +92,19 @@ module.exports = async (bajelfile) => {
       return [1]
     }
     const task = bajelfile[target] || {}
+
+    // Check for recursion
+    if (prevTargets.includes(target)) {
+      throw new Error(`infinite loop ${prevTargets.join(' → ')} → ${target}`)
+    }
+    prevTargets = [...prevTargets, target]
+
     const deps = task.deps || []
     const exec = task.exec
     const call = task.call
     let lastDepsTime = 0
     for (let i = 0; i < deps.length; ++i) {
-      const [depCode, depTime, depRecipeHappened] = await recurse(deps[i])
+      const [depCode, depTime, depRecipeHappened] = await recurse(prevTargets, deps[i])
       recipeHappened = recipeHappened || depRecipeHappened
       if (depCode !== 0) {
         debugOut(() => `-- execution of dep target "${deps[i]}" failed. Stopping.`)
@@ -187,12 +194,12 @@ module.exports = async (bajelfile) => {
           const expand = x => x.split('%').join(match)
           const expandedTarget = expand(target)
           // console.log('expandedTarget=', expandedTarget)
-          /*if (bajelfile[expandedTarget]) {
+          /* if (bajelfile[expandedTarget]) {
             tConsole.warn('Recursion')
             tConsole.warn(`"${target}": ${JSON.stringify(bajelfile[target])}`)
             tConsole.warn(`"${target}": ${JSON.stringify(toAdd[target])}`)
             continue
-          }*/
+          } */
           matchHappened = expansionHappened = true
           toRemove.push(target)
           const expandedTask = {}
@@ -200,9 +207,9 @@ module.exports = async (bajelfile) => {
             expandedTask.deps = [file, ...deps.map(expand)]
           }
           for (const expandedDep of expandedTask.deps) {
-            if (bajelfile[expandedDep]) {
+            if (!expandedDep.match(/%/) && bajelfile[expandedDep]) {
               throw new Error(
-                `Target "${expandedTarget}" Infinite loop: ${JSON.stringify(expandedTask.deps)}`)
+                `infinite loop after expansion ${expandedTarget} → ${expandedDep}`)
             }
           }
           if (task.exec) {
@@ -275,7 +282,7 @@ module.exports = async (bajelfile) => {
   }
 
   try {
-    const [code, ts, recipeHappened] = await recurse(start)
+    const [code, ts, recipeHappened] = await recurse([], start)
 
     if (code !== 0) {
       tConsole.error(`bajel: recipe for target '${start}' failed\nbajel: *** [error] Error ${code}`)
