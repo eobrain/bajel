@@ -126,6 +126,7 @@ module.exports = async (bajelfile) => {
       const sources = deps.join(' ')
       if (call) {
         const echo = tConsole.log
+        echo(`calling function: ${sources} --> ${target}`)
         call({ target, source, sources, echo })
         recipeHappened = true
       } else {
@@ -190,16 +191,8 @@ module.exports = async (bajelfile) => {
       for (const file of [...files, ...Object.keys(bajelfile)]) {
         const match = from.match(file)
         if (match) {
-          // console.log(`${from}.match(${file}) --> ${match}`)
           const expand = x => x.split('%').join(match)
           const expandedTarget = expand(target)
-          // console.log('expandedTarget=', expandedTarget)
-          /* if (bajelfile[expandedTarget]) {
-            tConsole.warn('Recursion')
-            tConsole.warn(`"${target}": ${JSON.stringify(bajelfile[target])}`)
-            tConsole.warn(`"${target}": ${JSON.stringify(toAdd[target])}`)
-            continue
-          } */
           matchHappened = expansionHappened = true
           toRemove.push(target)
           const expandedTask = {}
