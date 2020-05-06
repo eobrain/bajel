@@ -15,7 +15,10 @@ module.exports = pattern => {
     case 1:
       return undefined
     case 2:
-      return { match: matchPatt(fixes) }
+      return {
+        match: matchPatt(fixes),
+        toString: () => `Pattern{${JSON.stringify(fixes)}}`
+      }
     default:
       throw new Error(`Too many percents in "${pattern}`)
   }

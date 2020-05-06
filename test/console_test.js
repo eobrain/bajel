@@ -132,7 +132,7 @@ test.serial('bad exec debug', async t => {
 
     t.deepEqual(stdout,
       'target "fail" does not exist and its most recent deps does not exist\n' +
-            'target "fail" does not exist and has an exec\n' +
+            'target "fail" does not exist and has a recipe\n' +
             'false\n' +
             'target "start" -- execution of dep target "fail" failed. Stopping.\n')
     t.deepEqual(stderr,
@@ -161,60 +161,15 @@ test.serial('missing exec debug', async t => {
 
     t.deepEqual(stdout,
       'target "noop" does not exist and its most recent deps does not exist\n' +
-      'target "noop" has no exec\n' +
+      'target "noop" has no recipe\n' +
       'target "start" does not exist and its most recent deps does not exist\n' +
-      'target "start" has no exec\n' +
+      'target "start" has no recipe\n' +
       'bajel: Nothing to be done for "start".\n')
     t.deepEqual(stderr, '')
     t.deepEqual(code, 0)
   } finally {
     process.argv.pop()
   }
-})
-
-test.serial('no match', async t => {
-  const [code, stdout, stderr] = await build(
-    {
-      foo: { deps: ['bad_target'] }
-    }
-  )
-
-  t.deepEqual(stderr,
-    'bad_target is not a file and is not one of the build targets: [ \'foo\' ]\n' +
-        'bajel: recipe for target \'foo\' failed\n' +
-        'bajel: *** [error] Error 1\n')
-  t.deepEqual(stdout, '')
-  t.deepEqual(code, 1)
-})
-
-test.serial('bad deps', async t => {
-  const [code, stdout, stderr] = await build(
-    {
-      foo: { deps: 'string dep' }
-    }
-  )
-
-  t.deepEqual(stderr,
-    'Problem expanding percents: Error: Deps should be an array in\n' +
-        '"foo":{\n' +
-        ' "deps": "string dep"\n' +
-        '}\n')
-  t.deepEqual(stdout, '')
-  t.deepEqual(code, 1)
-})
-
-test.serial('bad percent', async t => {
-  const [code, stdout, stderr] = await build(
-    {
-      '%.c': { deps: ['foo'] },
-      foo: { exec: ': hello' }
-    }
-  )
-
-  t.deepEqual(stderr,
-    'Problem expanding percents: Error: Target "%.c" has replacement pattern, but dependencies have no percents: ["foo"]\n')
-  t.deepEqual(stdout, '')
-  t.deepEqual(code, 1)
 })
 
 test('no percent match', async t => {

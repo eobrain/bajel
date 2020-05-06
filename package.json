@@ -1,6 +1,6 @@
 {
   "name": "bajel",
-  "version": "0.3.7",
+  "version": "0.4.0",
   "description": "A build system modelled on make.",
   "main": "index.js",
   "bin": {
@@ -31,7 +31,7 @@
     "toml": "^3.0.0"
   },
   "devDependencies": {
-    "ava": "^3.4.0",
+    "ava": "^3.8.1",
     "nodejs-sh": "^0.2.0",
     "nyc": "^15.0.0"
   }
