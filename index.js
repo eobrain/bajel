@@ -1,4 +1,5 @@
 const { spawn } = require('child_process')
+const fs = require('fs')
 const getopts = require('getopts')
 const Percent = require('./percent.js')
 const StrConsole = require('./teeconsole.js')
@@ -116,7 +117,7 @@ module.exports = async (bajelfile) => {
     }
 
     debugOut(() => `${ago(targetTime)} and its most recent deps ${ago(lastDepsTime)}`)
-    const hasRecipe = exec || call
+    const hasRecipe = !!exec || !!call
     if (hasRecipe && (targetTime === 0 || targetTime < lastDepsTime)) {
       debugOut(() => targetTime === 0
         ? 'does not exist and has a recipe'
@@ -126,8 +127,13 @@ module.exports = async (bajelfile) => {
       const sources = deps.join(' ')
       if (call) {
         const echo = tConsole.log
-        echo(`calling function: ${sources} --> ${target}`)
-        call({ target, source, sources, echo })
+        tConsole.log(`calling function: ${sources} --> ${target}`)
+        call({
+          target: { path: target, write: s => fs.writeFileSync(target, s) },
+          source: { path: source, read: () => fs.readFileSync(source) },
+          sources: deps.map(p => ({ path: p, read: () => fs.readFileSync(p) })),
+          echo
+        })
         recipeHappened = true
       } else {
         // exec
@@ -150,7 +156,7 @@ module.exports = async (bajelfile) => {
         ? 'has no recipe'
         : (lastDepsTime === 0
           ? 'exists and there are no deps so ignoring recipe'
-          : 'is more recent than the most recent dep so ignoring reccipe'
+          : 'is more recent than the most recent dep so ignoring recipe'
         )
       )
     }
@@ -165,7 +171,6 @@ module.exports = async (bajelfile) => {
     const toRemove = []
     let expansionHappened = false
     for (const target in bajelfile) {
-      // console.log('target=', target)
       const task = bajelfile[target]
       let deps = task.deps || []
       if (!deps.filter) {

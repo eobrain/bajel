@@ -1,5 +1,3 @@
-import fs from 'fs'
-
 const CC = 'gcc'
 const CFLAGS = '-I.'
 const DEPS = ['hellomake.h']
@@ -18,10 +16,7 @@ export default {
   },
 
   clean: {
-    call: ['hellomake', ...OBJ].forEach(path => {
-      if (fs.existsSync(path)) {
-        fs.unlinkSync(path)
-      }
-    })
+    exec: `rm -f hellomake ${OBJ.join(' ')}`
   }
+
 }

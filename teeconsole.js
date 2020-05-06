@@ -1,7 +1,7 @@
 const { Writable } = require('stream')
 const { Console } = require('console')
 
-const TeeStreamToString = (wrapped) => {
+const TeeStreamToString = wrapped => {
   let string = ''
   const stream = Writable()
   stream._write = (chunk, enc, next) => {
