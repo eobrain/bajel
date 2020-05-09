@@ -152,17 +152,26 @@ module.exports = async (bajelfile) => {
         if (!exec.replace) {
           throw new TypeError(`exec of target "${target}" should be a string`)
         }
-        const substitutedExec = exec
-          .replace(/\$@/g, target)
-          .replace(/\$</g, source)
-          .replace(/\$\+/g, sources)
-          .replace(/\$\((\w+)\)/g, (_, variableName) => {
+
+        const variableInterpolation = (prev, string) =>
+          string.replace(/\$\((\w+)\)/g, (_, variableName) => {
+            if (prev[variableName]) {
+              throw new Error(`Recursive definition of ${variableName}.`)
+            }
             const value = variables[variableName]
             if (value === undefined) {
               throw new Error(`Variable ${variableName} is not defined.`)
             }
-            return Array.isArray(value) ? value.join(' ') : value
+            const asString = Array.isArray(value) ? value.join(' ') : value
+            return variableInterpolation({ [variableName]: true, ...prev }, asString)
           })
+
+        const substitutedExec = variableInterpolation({},
+          exec
+            .replace(/\$@/g, target)
+            .replace(/\$</g, source)
+            .replace(/\$\+/g, sources)
+        )
         const code = await printAndExec(substitutedExec)
         recipeHappened = true
         if (code !== 0) {
