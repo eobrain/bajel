@@ -4,6 +4,7 @@ const Percent = require('./percent.js')
 const StrConsole = require('./teeconsole.js')
 const { timestamp, walkDir } = require('./fs_util.js')
 const printAndExec = require('./exec.js')
+const Variables = require('./variables.js')
 
 // const trace = x => console.log('trace:', x) || x
 
@@ -38,13 +39,11 @@ module.exports = async (bajelfile) => {
 
   // Split bajelfile into variables and tasks
   const tasks = {}
-  const variables = {}
+  const variables = new Variables(bajelfile)
   for (const key in bajelfile) {
     const value = bajelfile[key]
     if (typeof value === 'object' && !Array.isArray(value)) {
       tasks[key] = value
-    } else {
-      variables[key] = value
     }
   }
 
@@ -133,20 +132,7 @@ module.exports = async (bajelfile) => {
           throw new TypeError(`exec of target "${target}" should be a string`)
         }
 
-        const variableInterpolation = (prev, string) =>
-          string.replace(/\$\((\w+)\)/g, (_, variableName) => {
-            if (prev[variableName]) {
-              throw new Error(`Recursive definition of ${variableName}.`)
-            }
-            const value = variables[variableName]
-            if (value === undefined) {
-              throw new Error(`Variable ${variableName} is not defined.`)
-            }
-            const asString = Array.isArray(value) ? value.join(' ') : value
-            return variableInterpolation({ [variableName]: true, ...prev }, asString)
-          })
-
-        const substitutedExec = variableInterpolation({},
+        const substitutedExec = variables.interpolation(
           exec
             .replace(/\$@/g, target)
             .replace(/\$</g, source)
