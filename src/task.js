@@ -1,4 +1,4 @@
-module.exports = class {
+class Task {
   constructor (target, { deps, exec, call }) {
     this._target = target
     this.deps = deps
@@ -23,4 +23,21 @@ module.exports = class {
   target () {
     return this._target
   }
+
+  expanded (file, match, expand) {
+    const expandedTarget = expand(this._target)
+    const object = { }
+    if (this.deps) {
+      object.deps = [file, ...this.deps.map(expand)].filter(x => x)
+    }
+    if (this.exec) {
+      object.exec = expand(this.exec)
+    }
+    if (this.call) {
+      object.call = $ => this.call({ ...$, match })
+    }
+    return new Task(expandedTarget, object)
+  }
 }
+
+module.exports = Task

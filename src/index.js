@@ -185,26 +185,17 @@ module.exports = async (bajelfile) => {
         const match = from.match(file)
         if (match) {
           const expand = x => x.split('%').join(match)
-          const expandedTarget = expand(task.target())
           matchHappened = expansionHappened = true
           toRemove.push(task.target())
-          const expandedTask = new Task(expandedTarget, {})
-          if (deps) {
-            expandedTask.deps = [file, ...deps.map(expand)]
-          }
+          const expandedTask = task.expanded(file, match, expand)
           for (const expandedDep of expandedTask.deps) {
             if (!expandedDep.match(/%/) && tasks.has(expandedDep)) {
               throw new Error(
-                `infinite loop after expansion ${expandedTarget} → ${expandedDep}`)
+                `infinite loop after expansion ${expandedTask.target()} → ${expandedDep}`)
             }
           }
-          if (task.exec) {
-            expandedTask.exec = expand(task.exec)
-          }
-          if (task.call) {
-            expandedTask.call = $ => task.call({ ...$, match })
-          }
-          toAdd[expandedTarget] = expandedTask
+
+          toAdd[expandedTask.target()] = expandedTask
         }
       }
       if (!matchHappened) {
