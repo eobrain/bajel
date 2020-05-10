@@ -253,14 +253,15 @@ rm -f hellomake hellomake.o hellofunc.o
 
 A build file is an object with the following structure:
 
-`{`
-  *variable*`:` *variableValue*`,`
-  *variable*`:` *variableValue*`,`
-  ...
-  *target*`:` `{deps:` *dependencies* `, exec: ` *shellCommand*`},`
-  *target*`:` `{deps:` *dependencies* `, exec: ` *shellCommand*`},`
-  ...
-`}`
+* *variable*: *variableValue*
+* *variable*: *variableValue*
+* ...
+* *target*:
+  * deps: *dependencies*
+  * exec: *shellCommand*
+* *target*:
+  * deps: *dependencies*
+  * exec: *shellCommand*
 
 There can be any number of *variables* and *targets*.
 
