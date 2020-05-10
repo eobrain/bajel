@@ -1,5 +1,5 @@
 const test = require('ava')
-const Percent = require('../percent.js')
+const Percent = require('../src/percent.js')
 
 test('simple', t => {
   const p = Percent('abc%def')

@@ -1,5 +1,5 @@
 const test = require('ava')
-const build = require('../index.js')
+const build = require('../src/index.js')
 
 test.serial('no match', async t => {
   const [code, stdout, stderr] = await build(

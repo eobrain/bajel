@@ -1,12 +1,12 @@
 const test = require('ava')
-const build = require('../index.js')
+const build = require('../src/index.js')
 
 const exec = `
   cd $@
-  ../../../cli.js clean
-  ../../../cli.js
-  ../../../cli.js
-  ../../../cli.js clean
+  ../../../src/cli.js clean
+  ../../../src/cli.js
+  ../../../src/cli.js
+  ../../../src/cli.js clean
 `
 
 const outFilter = s => s
@@ -19,10 +19,10 @@ const outFilter = s => s
 const expected =
 '\n' +
 'cd demo/colby/???\n' +
-'../../../cli.js clean\n' +
-'../../../cli.js\n' +
-'../../../cli.js\n' +
-'../../../cli.js clean\n\n' +
+'../../../src/cli.js clean\n' +
+'../../../src/cli.js\n' +
+'../../../src/cli.js\n' +
+'../../../src/cli.js clean\n\n' +
 'rm -f hellomake hellomake.o hellofunc.o\n\n' +
 'gcc -c -o hellomake.o hellomake.c -I.\n\n' +
 'gcc -c -o hellofunc.o hellofunc.c -I.\n\n' +

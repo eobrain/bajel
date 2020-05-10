@@ -1,5 +1,5 @@
 const test = require('ava')
-const TeeConsole = require('../teeconsole.js')
+const TeeConsole = require('../src/teeconsole.js')
 
 test('log', t => {
   const { tConsole, tStdout, tStderr } = TeeConsole()

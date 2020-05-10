@@ -1,7 +1,7 @@
 const { rm, touch } = require('nodejs-sh')
 const fs = require('fs')
 const test = require('ava')
-const build = require('../../index.js')
+const build = require('../../src/index.js')
 const { sleep } = require('../_test_helper.js')
 
 const deepClone = object => JSON.parse(JSON.stringify(object))

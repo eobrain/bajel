@@ -1,5 +1,5 @@
 const test = require('ava')
-const build = require('../index.js')
+const build = require('../src/index.js')
 const fs = require('fs')
 const { buildFileTree, writeTmpFile } = require('./_test_helper.js')
 
