@@ -196,8 +196,8 @@ test('duplicate targets', async t => {
 
   t.deepEqual(stderr,
     'Duplicate targets\n' +
-        '"test/colby/hellofunc.c": {"exec":": hello"}\n' +
-        '"test/colby/hellofunc.c": {"deps":["test/colby/hellofunc.bar"]}\n')
+        'test/colby/hellofunc.c:{exec:": hello"}\n' +
+        'test/colby/hellofunc.c:{deps:["test/colby/hellofunc.bar"]}\n')
   t.deepEqual(stdout, ': foofoo\n')
   t.deepEqual(code, 0)
 })
@@ -249,9 +249,7 @@ test.serial('bad deps with print', async t => {
 
     t.deepEqual(stderr,
       'Problem expanding percents: Error: Deps should be an array in\n' +
-            '"foo":{\n' +
-            ' "deps": "string dep"\n' +
-            '}\n')
+            'foo:{deps:"string dep"}\n')
     t.deepEqual(stdout,
       '{ foo: { deps: \'string dep\' } }\n')
     t.deepEqual(code, 1)

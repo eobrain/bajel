@@ -1,3 +1,5 @@
+const Task = require('./task.js')
+
 module.exports = class {
   constructor (bajelfile, tConsole) {
     this._tConsole = tConsole
@@ -5,7 +7,7 @@ module.exports = class {
     for (const key in bajelfile) {
       const value = bajelfile[key]
       if (typeof value === 'object' && !Array.isArray(value)) {
-        this._dict[key] = value
+        this._dict[key] = new Task(key, value)
       }
     }
     this._explicitTargets = Object.keys(this._dict).filter(k => !k.includes('%'))
@@ -41,8 +43,8 @@ module.exports = class {
     for (const target in toAdd) {
       if (this._dict[target]) {
         this._tConsole.warn('Duplicate targets')
-        this._tConsole.warn(`"${target}": ${JSON.stringify(this._dict[target])}`)
-        this._tConsole.warn(`"${target}": ${JSON.stringify(toAdd[target])}`)
+        this._tConsole.warn(this._dict[target].toString())
+        this._tConsole.warn(toAdd[target].toString())
       }
       this._dict[target] = toAdd[target]
     }

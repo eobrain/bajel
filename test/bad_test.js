@@ -77,19 +77,19 @@ test.serial('expansion infinite loop', async t => {
 })
 
 test.serial('bad deps', async t => {
-  const [code, stdout, stderr] = await build(
-    {
-      foo: { deps: 'string dep' }
-    }
-  )
+  const out = collect(await build({
 
-  t.deepEqual(stderr,
+    foo: { deps: 'string dep' }
+
+  }))
+
+  t.deepEqual(out, {
+    code: 1,
+    stdout: '',
+    stderr:
     'Problem expanding percents: Error: Deps should be an array in\n' +
-          '"foo":{\n' +
-          ' "deps": "string dep"\n' +
-          '}\n')
-  t.deepEqual(stdout, '')
-  t.deepEqual(code, 1)
+          'foo:{deps:"string dep"}\n'
+  })
 })
 
 test.serial('bad percent', async t => {

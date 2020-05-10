@@ -5,6 +5,7 @@ const StrConsole = require('./teeconsole.js')
 const { timestamp, walkDir } = require('./fs_util.js')
 const printAndExec = require('./exec.js')
 const Variables = require('./variables.js')
+const Task = require('./task.js')
 const Tasks = require('./tasks.js')
 
 // const trace = x => console.log('trace:', x) || x
@@ -161,7 +162,7 @@ module.exports = async (bajelfile) => {
     tasks.forTask((target, task) => {
       let deps = task.deps || []
       if (!deps.filter) {
-        throw new Error('Deps should be an array in\n"' + target + '":' + JSON.stringify(task, null, 1))
+        throw new Error('Deps should be an array in\n' + task.toString())
       }
       let from
       for (let i = 0; i < deps.length; ++i) {
@@ -187,7 +188,7 @@ module.exports = async (bajelfile) => {
           const expandedTarget = expand(target)
           matchHappened = expansionHappened = true
           toRemove.push(target)
-          const expandedTask = {}
+          const expandedTask = new Task(expandedTarget, {})
           if (deps) {
             expandedTask.deps = [file, ...deps.map(expand)]
           }
@@ -203,7 +204,7 @@ module.exports = async (bajelfile) => {
           if (task.call) {
             expandedTask.call = $ => task.call({ ...$, match })
           }
-          toAdd[expand(target)] = expandedTask
+          toAdd[expandedTarget] = expandedTask
         }
       }
       if (!matchHappened) {
