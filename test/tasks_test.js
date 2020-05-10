@@ -34,7 +34,7 @@ test('removeAll', t => {
     ccc: { exec: 'CCC' }
   })
 
-  tasks.removeAll(['bbb', 'ccc', 'ddd'])
+  tasks._removeAll(['bbb', 'ccc', 'ddd'])
 
   t.deepEqual(tasks.targets(), ['aaa'])
 })
@@ -46,7 +46,7 @@ test('addAll', t => {
     ccc: { exec: 'CCC' }
   }, console)
 
-  tasks.addAll({
+  tasks._addAll({
     ccc: { exec: 'gamma' },
     ddd: { exec: 'delta' },
     eee: { exec: 'epsilon' }
