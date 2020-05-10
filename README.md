@@ -140,7 +140,8 @@ clean:
   "clean": {
     "exec": "rm -f hellomake $(OBJ)"
   }
-}```
+}
+```
 
 ### build.cjs
 
