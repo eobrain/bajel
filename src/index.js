@@ -102,7 +102,7 @@ module.exports = async (bajelfile) => {
         ? 'does not exist and has a recipe'
         : 'is older than the most recent dep and has a recipe'
       )
-      const callHappened = task.doCall(tConsole)
+      const callHappened = task.doCall(dryRun, tConsole)
       recipeHappened = recipeHappened || callHappened
       if (!callHappened) {
         const code = await task.doExec(variables, dryRun, tConsole)

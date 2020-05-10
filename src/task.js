@@ -81,7 +81,7 @@ class Task {
     return !!this._exec || !!this._call
   }
 
-  doCall (tConsole) {
+  doCall (dryRun, tConsole) {
     if (!this._call) {
       return false
     }
@@ -91,6 +91,9 @@ class Task {
 
     const echo = tConsole.log
     tConsole.log(`calling function: ${sources} --> ${this._target}`)
+    if (dryRun) {
+      return true
+    }
     this._call({
       target: { path: this._target, write: s => fs.writeFileSync(this._target, s) },
       source: { path: source, read: () => fs.readFileSync(source) },
