@@ -1,10 +1,11 @@
+const fs = require('fs')
 const Percent = require('./percent.js')
 class Task {
   constructor (target, { deps, exec, call }) {
     this._target = target
     this.deps = deps
     this.exec = exec
-    this.call = call
+    this._call = call
   }
 
   toString () {
@@ -15,8 +16,8 @@ class Task {
     if (this.exec) {
       propertyStrings.push(`exec:${JSON.stringify(this.exec)}`)
     }
-    if (this.call) {
-      propertyStrings.push(`call:${this.call}`)
+    if (this._call) {
+      propertyStrings.push(`call:${this._call}`)
     }
     return `${this._target}:{${propertyStrings.join()}}`
   }
@@ -34,8 +35,8 @@ class Task {
     if (this.exec) {
       object.exec = expand(this.exec)
     }
-    if (this.call) {
-      object.call = $ => this.call({ ...$, match })
+    if (this._call) {
+      object.call = $ => this._call({ ...$, match })
     }
     return new Task(expandedTarget, object)
   }
@@ -72,6 +73,25 @@ class Task {
     for (let i = 0; i < deps.length; ++i) {
       yield deps[i]
     }
+  }
+
+  hasRecipe () {
+    return !!this.exec || !!this._call
+  }
+
+  doCall (target, source, sources, tConsole) {
+    if (!this._call) {
+      return false
+    }
+    const echo = tConsole.log
+    tConsole.log(`calling function: ${sources} --> ${target}`)
+    this._call({
+      target: { path: target, write: s => fs.writeFileSync(target, s) },
+      source: { path: source, read: () => fs.readFileSync(source) },
+      sources: (this.deps || []).map(p => ({ path: p, read: () => fs.readFileSync(p) })),
+      echo
+    })
+    return true
   }
 }
 

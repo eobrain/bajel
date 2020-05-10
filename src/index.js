@@ -1,6 +1,4 @@
-const fs = require('fs')
 const getopts = require('getopts')
-const Percent = require('./percent.js')
 const StrConsole = require('./teeconsole.js')
 const { timestamp, walkDir } = require('./fs_util.js')
 const printAndExec = require('./exec.js')
@@ -87,7 +85,6 @@ module.exports = async (bajelfile) => {
 
     const deps = task.deps || []
     const exec = task.exec
-    const call = task.call
     let lastDepsTime = 0
     for (const dep of task.theDeps()) {
       const [depCode, depTime, depRecipeHappened] = await recurse(prevTargets, dep)
@@ -102,25 +99,16 @@ module.exports = async (bajelfile) => {
     }
 
     debugOut(() => `${ago(targetTime)} and its most recent deps ${ago(lastDepsTime)}`)
-    const hasRecipe = !!exec || !!call
-    if (hasRecipe && (targetTime === 0 || targetTime < lastDepsTime)) {
+    if (task.hasRecipe() && (targetTime === 0 || targetTime < lastDepsTime)) {
       debugOut(() => targetTime === 0
         ? 'does not exist and has a recipe'
         : 'is older than the most recent dep and has a recipe'
       )
       const source = deps.length > 0 ? deps[0] : '***no-source***'
       const sources = deps.join(' ')
-      if (call) {
-        const echo = tConsole.log
-        tConsole.log(`calling function: ${sources} --> ${target}`)
-        call({
-          target: { path: target, write: s => fs.writeFileSync(target, s) },
-          source: { path: source, read: () => fs.readFileSync(source) },
-          sources: deps.map(p => ({ path: p, read: () => fs.readFileSync(p) })),
-          echo
-        })
-        recipeHappened = true
-      } else {
+      const callHappened = task.doCall(target, source, sources, tConsole)
+      recipeHappened = recipeHappened || callHappened
+      if (!callHappened) {
         // exec
         if (!exec.replace) {
           throw new TypeError(`exec of target "${target}" should be a string`)
@@ -140,7 +128,7 @@ module.exports = async (bajelfile) => {
         }
       }
     } else {
-      debugOut(() => !hasRecipe
+      debugOut(() => !task.hasRecipe()
         ? 'has no recipe'
         : (lastDepsTime === 0
           ? 'exists and there are no deps so ignoring recipe'
