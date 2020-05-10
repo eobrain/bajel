@@ -38,6 +38,13 @@ class Task {
     }
     return new Task(expandedTarget, object)
   }
+
+  * theDeps () {
+    const deps = this.deps || []
+    for (let i = 0; i < deps.length; ++i) {
+      yield deps[i]
+    }
+  }
 }
 
 module.exports = Task

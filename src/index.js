@@ -5,7 +5,6 @@ const StrConsole = require('./teeconsole.js')
 const { timestamp, walkDir } = require('./fs_util.js')
 const printAndExec = require('./exec.js')
 const Variables = require('./variables.js')
-const Task = require('./task.js')
 const Tasks = require('./tasks.js')
 
 // const trace = x => console.log('trace:', x) || x
@@ -90,11 +89,11 @@ module.exports = async (bajelfile) => {
     const exec = task.exec
     const call = task.call
     let lastDepsTime = 0
-    for (let i = 0; i < deps.length; ++i) {
-      const [depCode, depTime, depRecipeHappened] = await recurse(prevTargets, deps[i])
+    for (const dep of task.theDeps()) {
+      const [depCode, depTime, depRecipeHappened] = await recurse(prevTargets, dep)
       recipeHappened = recipeHappened || depRecipeHappened
       if (depCode !== 0) {
-        debugOut(() => `-- execution of dep target "${deps[i]}" failed. Stopping.`)
+        debugOut(() => `-- execution of dep target "${dep}" failed. Stopping.`)
         return [depCode]
       }
       if (depTime > lastDepsTime) {

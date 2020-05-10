@@ -22,7 +22,7 @@ module.exports = class {
   }
 
   get (target) {
-    return this._dict[target] || {}
+    return this._dict[target] || new Task({}, this._tConsole)
   }
 
   targets () {
