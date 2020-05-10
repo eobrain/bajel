@@ -159,20 +159,9 @@ module.exports = async (bajelfile) => {
     const toRemove = []
     let expansionHappened = false
     tasks.forTask(task => {
-      let deps = task.deps || []
-      if (!deps.filter) {
-        throw new Error('Deps should be an array in\n' + task.toString())
-      }
-      let from
-      for (let i = 0; i < deps.length; ++i) {
-        from = Percent(deps[i])
-        if (from) {
-          delete deps[i]
-          break
-        }
-      }
-      deps = deps.filter(d => d)
-      if (!from) {
+      const fromPattern = task.removePatternDep()
+      const deps = task.deps || []
+      if (!fromPattern) {
         if (task.target().includes('%')) {
           throw new Error(
             `Target "${task.target()}" has replacement pattern, but dependencies have no percents: ${JSON.stringify(deps)}`)
@@ -181,19 +170,13 @@ module.exports = async (bajelfile) => {
       }
       let matchHappened
       for (const file of [...files, ...tasks.targets()]) {
-        const match = from.match(file)
+        const match = fromPattern.match(file)
         if (match) {
           const expand = x => x.split('%').join(match)
           matchHappened = expansionHappened = true
           toRemove.push(task.target())
           const expandedTask = task.expanded(file, match, expand)
-          for (const expandedDep of expandedTask.deps) {
-            if (!expandedDep.match(/%/) && tasks.has(expandedDep)) {
-              throw new Error(
-                `infinite loop after expansion ${expandedTask.target()} → ${expandedDep}`)
-            }
-          }
-
+          expandedTask.infiniteLoopCheck(target => tasks.has(target))
           toAdd[expandedTask.target()] = expandedTask
         }
       }
