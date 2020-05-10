@@ -83,7 +83,6 @@ module.exports = async (bajelfile) => {
     }
     prevTargets = [...prevTargets, target]
 
-    const deps = task.deps || []
     let lastDepsTime = 0
     for (const dep of task.theDeps()) {
       const [depCode, depTime, depRecipeHappened] = await recurse(prevTargets, dep)
@@ -103,15 +102,13 @@ module.exports = async (bajelfile) => {
         ? 'does not exist and has a recipe'
         : 'is older than the most recent dep and has a recipe'
       )
-      const source = deps.length > 0 ? deps[0] : '***no-source***'
-      const sources = deps.join(' ')
-      const callHappened = task.doCall(source, sources, tConsole)
+      const callHappened = task.doCall(tConsole)
       recipeHappened = recipeHappened || callHappened
       if (!callHappened) {
-        const code = await task.doExec(source, sources, variables, dryRun, tConsole)
+        const code = await task.doExec(variables, dryRun, tConsole)
         recipeHappened = true
         if (code !== 0) {
-          tConsole.error('FAILED  ', target, ':', deps.join(' '))
+          tConsole.error('FAILED call', task.toString())
           return [code]
         }
       }
@@ -136,11 +133,10 @@ module.exports = async (bajelfile) => {
     let expansionHappened = false
     tasks.forTask(task => {
       const fromPattern = task.removePatternDep()
-      const deps = task.deps || []
       if (!fromPattern) {
         if (task.target().includes('%')) {
           throw new Error(
-            `Target "${task.target()}" has replacement pattern, but dependencies have no percents: ${JSON.stringify(deps)}`)
+            `Target "${task.target()}" has replacement pattern, but deps have no percents: ${task.toString()}`)
         }
         return
       }

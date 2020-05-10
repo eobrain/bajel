@@ -101,7 +101,7 @@ test.serial('bad percent', async t => {
   )
 
   t.deepEqual(stderr,
-    'Problem expanding percents: Error: Target "%.c" has replacement pattern, but dependencies have no percents: ["foo"]\n')
+    'Problem expanding percents: Error: Target "%.c" has replacement pattern, but deps have no percents: %.c:{deps:["foo"]}\n')
   t.deepEqual(stdout, '')
   t.deepEqual(code, 1)
 })

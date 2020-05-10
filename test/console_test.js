@@ -113,7 +113,7 @@ test.serial('bad exec', async t => {
     'FAILED with code 1: \n' +
         'false\n' +
         '\n' +
-        'FAILED   fail : \n' +
+        'FAILED call fail:{exec:"false"}\n' +
         'bajel: recipe for target \'start\' failed\n' +
         'bajel: *** [error] Error 1\n'
   )
@@ -139,7 +139,7 @@ test.serial('bad exec debug', async t => {
       'FAILED with code 1: \n' +
             'false\n' +
             '\n' +
-            'FAILED   fail : \n' +
+            'FAILED call fail:{exec:"false"}\n' +
             'bajel: recipe for target \'start\' failed\n' +
             'bajel: *** [error] Error 1\n'
     )
