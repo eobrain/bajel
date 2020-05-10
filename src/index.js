@@ -1,7 +1,6 @@
 const getopts = require('getopts')
 const StrConsole = require('./teeconsole.js')
 const { timestamp, walkDir } = require('./fs_util.js')
-const printAndExec = require('./exec.js')
 const Variables = require('./variables.js')
 const Tasks = require('./tasks.js')
 
@@ -84,7 +83,6 @@ module.exports = async (bajelfile) => {
     prevTargets = [...prevTargets, target]
 
     const deps = task.deps || []
-    const exec = task.exec
     let lastDepsTime = 0
     for (const dep of task.theDeps()) {
       const [depCode, depTime, depRecipeHappened] = await recurse(prevTargets, dep)
@@ -106,21 +104,10 @@ module.exports = async (bajelfile) => {
       )
       const source = deps.length > 0 ? deps[0] : '***no-source***'
       const sources = deps.join(' ')
-      const callHappened = task.doCall(target, source, sources, tConsole)
+      const callHappened = task.doCall(source, sources, tConsole)
       recipeHappened = recipeHappened || callHappened
       if (!callHappened) {
-        // exec
-        if (!exec.replace) {
-          throw new TypeError(`exec of target "${target}" should be a string`)
-        }
-
-        const substitutedExec = variables.interpolation(
-          exec
-            .replace(/\$@/g, target)
-            .replace(/\$</g, source)
-            .replace(/\$\+/g, sources)
-        )
-        const code = await printAndExec(substitutedExec, dryRun, tConsole)
+        const code = await task.doExec(source, sources, variables, dryRun, tConsole)
         recipeHappened = true
         if (code !== 0) {
           tConsole.error('FAILED  ', target, ':', deps.join(' '))

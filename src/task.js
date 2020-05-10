@@ -1,10 +1,12 @@
 const fs = require('fs')
 const Percent = require('./percent.js')
+const printAndExec = require('./exec.js')
+
 class Task {
   constructor (target, { deps, exec, call }) {
     this._target = target
     this.deps = deps
-    this.exec = exec
+    this._exec = exec
     this._call = call
   }
 
@@ -13,8 +15,8 @@ class Task {
     if (this.deps) {
       propertyStrings.push(`deps:${JSON.stringify(this.deps)}`)
     }
-    if (this.exec) {
-      propertyStrings.push(`exec:${JSON.stringify(this.exec)}`)
+    if (this._exec) {
+      propertyStrings.push(`exec:${JSON.stringify(this._exec)}`)
     }
     if (this._call) {
       propertyStrings.push(`call:${this._call}`)
@@ -32,8 +34,8 @@ class Task {
     if (this.deps) {
       object.deps = [file, ...this.deps.map(expand)].filter(x => x)
     }
-    if (this.exec) {
-      object.exec = expand(this.exec)
+    if (this._exec) {
+      object.exec = expand(this._exec)
     }
     if (this._call) {
       object.call = $ => this._call({ ...$, match })
@@ -76,22 +78,36 @@ class Task {
   }
 
   hasRecipe () {
-    return !!this.exec || !!this._call
+    return !!this._exec || !!this._call
   }
 
-  doCall (target, source, sources, tConsole) {
+  doCall (source, sources, tConsole) {
     if (!this._call) {
       return false
     }
     const echo = tConsole.log
-    tConsole.log(`calling function: ${sources} --> ${target}`)
+    tConsole.log(`calling function: ${sources} --> ${this._target}`)
     this._call({
-      target: { path: target, write: s => fs.writeFileSync(target, s) },
+      target: { path: this._target, write: s => fs.writeFileSync(this._target, s) },
       source: { path: source, read: () => fs.readFileSync(source) },
       sources: (this.deps || []).map(p => ({ path: p, read: () => fs.readFileSync(p) })),
       echo
     })
     return true
+  }
+
+  async doExec (source, sources, variables, dryRun, tConsole) {
+    if (!this._exec.replace) {
+      throw new TypeError(`exec of target "${this._target}" should be a string`)
+    }
+
+    const substitutedExec = variables.interpolation(
+      this._exec
+        .replace(/\$@/g, this._target)
+        .replace(/\$</g, source)
+        .replace(/\$\+/g, sources)
+    )
+    return printAndExec(substitutedExec, dryRun, tConsole)
   }
 }
 
