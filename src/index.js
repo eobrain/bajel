@@ -5,6 +5,7 @@ const StrConsole = require('./teeconsole.js')
 const { timestamp, walkDir } = require('./fs_util.js')
 const printAndExec = require('./exec.js')
 const Variables = require('./variables.js')
+const Tasks = require('./tasks.js')
 
 // const trace = x => console.log('trace:', x) || x
 
@@ -38,31 +39,24 @@ module.exports = async (bajelfile) => {
   }
 
   // Split bajelfile into variables and tasks
-  const tasks = {}
+  const tasks = new Tasks(bajelfile, tConsole)
   const variables = new Variables(bajelfile)
-  for (const key in bajelfile) {
-    const value = bajelfile[key]
-    if (typeof value === 'object' && !Array.isArray(value)) {
-      tasks[key] = value
-    }
-  }
 
-  const explicitTargets = Object.keys(tasks).filter(k => !k.includes('%'))
-  if (explicitTargets.length === 0) {
-    const targetsStr = JSON.stringify(Object.keys(tasks))
+  if (tasks.explicitTargets().length === 0) {
+    const targetsStr = JSON.stringify(tasks.targets())
     tConsole.error(`No explicit targets in ${targetsStr}`)
     return [1, tStdout(), tStderr()]
   }
 
   if (options.t) {
-    tConsole.log(explicitTargets.join(' '))
+    tConsole.log(tasks.explicitTargets().join(' '))
     return [0, tStdout(), tStderr()]
   }
 
   const dryRun = options.n
   const start = options._.length > 0
     ? options._[0]
-    : explicitTargets[0]
+    : tasks.explicitTargets()[0]
 
   /**
  * @param {string} target being built
@@ -77,13 +71,13 @@ module.exports = async (bajelfile) => {
 
     let recipeHappened = false
     const targetTime = await timestamp(target)
-    if (!tasks[target] && targetTime === 0) {
+    if (!tasks.has(target) && targetTime === 0) {
       tConsole.warn(target,
         'is not a file and is not one of the build targets:',
-        Object.keys(tasks).sort())
+        tasks.targets().sort())
       return [1]
     }
-    const task = tasks[target] || {}
+    const task = tasks.get(target)
 
     // Check for recursion
     if (prevTargets.includes(target)) {
@@ -164,8 +158,7 @@ module.exports = async (bajelfile) => {
     const toAdd = {}
     const toRemove = []
     let expansionHappened = false
-    for (const target in tasks) {
-      const task = tasks[target]
+    tasks.forTask((target, task) => {
       let deps = task.deps || []
       if (!deps.filter) {
         throw new Error('Deps should be an array in\n"' + target + '":' + JSON.stringify(task, null, 1))
@@ -184,10 +177,10 @@ module.exports = async (bajelfile) => {
           throw new Error(
             `Target "${target}" has replacement pattern, but dependencies have no percents: ${JSON.stringify(deps)}`)
         }
-        continue
+        return
       }
       let matchHappened
-      for (const file of [...files, ...Object.keys(tasks)]) {
+      for (const file of [...files, ...tasks.targets()]) {
         const match = from.match(file)
         if (match) {
           const expand = x => x.split('%').join(match)
@@ -199,7 +192,7 @@ module.exports = async (bajelfile) => {
             expandedTask.deps = [file, ...deps.map(expand)]
           }
           for (const expandedDep of expandedTask.deps) {
-            if (!expandedDep.match(/%/) && tasks[expandedDep]) {
+            if (!expandedDep.match(/%/) && tasks.has(expandedDep)) {
               throw new Error(
                 `infinite loop after expansion ${expandedTarget} → ${expandedDep}`)
             }
@@ -216,16 +209,9 @@ module.exports = async (bajelfile) => {
       if (!matchHappened) {
         tConsole.warn(`No match for "${target}"`)
       }
-    }
-    toRemove.forEach(target => { delete tasks[target] })
-    for (const target in toAdd) {
-      if (tasks[target]) {
-        tConsole.warn('Duplicate targets')
-        tConsole.warn(`"${target}": ${JSON.stringify(tasks[target])}`)
-        tConsole.warn(`"${target}": ${JSON.stringify(toAdd[target])}`)
-      }
-      tasks[target] = toAdd[target]
-    }
+    })
+    tasks.removeAll(toRemove)
+    tasks.addAll(toAdd)
     return expansionHappened
   }
 
@@ -234,16 +220,16 @@ module.exports = async (bajelfile) => {
   } catch (e) {
     tConsole.error('Problem expanding percents: ' + e)
     if (options.p) {
-      tConsole.log(tasks)
+      tConsole.log(bajelfile)
     }
     return [1, tStdout(), tStderr()]
   }
   if (options.T) {
-    tConsole.log(Object.keys(tasks).join(' '))
+    tConsole.log(tasks.targets().join(' '))
     return [0, tStdout(), tStderr()]
   }
   if (options.p) {
-    tConsole.log(tasks)
+    tConsole.log(bajelfile)
     return [0, tStdout(), tStderr()]
   }
 

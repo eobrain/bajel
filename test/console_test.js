@@ -194,11 +194,11 @@ test('duplicate targets', async t => {
     }
   )
 
-  t.deepEqual(stdout, ': foofoo\n')
   t.deepEqual(stderr,
     'Duplicate targets\n' +
         '"test/colby/hellofunc.c": {"exec":": hello"}\n' +
         '"test/colby/hellofunc.c": {"deps":["test/colby/hellofunc.bar"]}\n')
+  t.deepEqual(stdout, ': foofoo\n')
   t.deepEqual(code, 0)
 })
 
