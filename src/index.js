@@ -159,7 +159,7 @@ module.exports = async (bajelfile) => {
     const toAdd = {}
     const toRemove = []
     let expansionHappened = false
-    tasks.forTask((target, task) => {
+    tasks.forTask(task => {
       let deps = task.deps || []
       if (!deps.filter) {
         throw new Error('Deps should be an array in\n' + task.toString())
@@ -174,9 +174,9 @@ module.exports = async (bajelfile) => {
       }
       deps = deps.filter(d => d)
       if (!from) {
-        if (target.includes('%')) {
+        if (task.target().includes('%')) {
           throw new Error(
-            `Target "${target}" has replacement pattern, but dependencies have no percents: ${JSON.stringify(deps)}`)
+            `Target "${task.target()}" has replacement pattern, but dependencies have no percents: ${JSON.stringify(deps)}`)
         }
         return
       }
@@ -185,9 +185,9 @@ module.exports = async (bajelfile) => {
         const match = from.match(file)
         if (match) {
           const expand = x => x.split('%').join(match)
-          const expandedTarget = expand(target)
+          const expandedTarget = expand(task.target())
           matchHappened = expansionHappened = true
-          toRemove.push(target)
+          toRemove.push(task.target())
           const expandedTask = new Task(expandedTarget, {})
           if (deps) {
             expandedTask.deps = [file, ...deps.map(expand)]
@@ -208,7 +208,7 @@ module.exports = async (bajelfile) => {
         }
       }
       if (!matchHappened) {
-        tConsole.warn(`No match for "${target}"`)
+        tConsole.warn(`No match for "${task.target()}"`)
       }
     })
     tasks.removeAll(toRemove)

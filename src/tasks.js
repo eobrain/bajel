@@ -31,7 +31,7 @@ module.exports = class {
 
   forTask (callback) {
     for (const target in this._dict) {
-      callback(target, this._dict[target])
+      callback(this._dict[target])
     }
   }
 
