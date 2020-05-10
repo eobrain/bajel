@@ -1,9 +1,9 @@
-const { spawn } = require('child_process')
 const fs = require('fs')
 const getopts = require('getopts')
 const Percent = require('./percent.js')
 const StrConsole = require('./teeconsole.js')
 const { timestamp, walkDir } = require('./fs_util.js')
+const printAndExec = require('./exec.js')
 
 // const trace = x => console.log('trace:', x) || x
 
@@ -64,26 +64,6 @@ module.exports = async (bajelfile) => {
   const start = options._.length > 0
     ? options._[0]
     : explicitTargets[0]
-
-  const shellTrim = cmd => cmd.split('\n').map(s => s.trim()).join('\n')
-
-  const printAndExec = cmd => new Promise(resolve => {
-    const trimmed = shellTrim(cmd)
-    tConsole.log(trimmed)
-    if (dryRun) {
-      resolve(0)
-      return
-    }
-    const process = spawn(trimmed, [], { shell: true })
-    process.stdout.on('data', data => { tConsole.log(data.toString()) })
-    process.stderr.on('data', data => { tConsole.error(data.toString()) })
-    process.on('exit', code => {
-      if (code !== 0) {
-        tConsole.error(`FAILED with code ${code}: \n${trimmed}\n`)
-      }
-      resolve(code)
-    })
-  })
 
   /**
  * @param {string} target being built
@@ -172,7 +152,7 @@ module.exports = async (bajelfile) => {
             .replace(/\$</g, source)
             .replace(/\$\+/g, sources)
         )
-        const code = await printAndExec(substitutedExec)
+        const code = await printAndExec(substitutedExec, dryRun, tConsole)
         recipeHappened = true
         if (code !== 0) {
           tConsole.error('FAILED  ', target, ':', deps.join(' '))
