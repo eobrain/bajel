@@ -4,6 +4,8 @@ const test = require('ava')
 const build = require('../../index.js')
 const { sleep } = require('../_test_helper.js')
 
+const deepClone = object => JSON.parse(JSON.stringify(object))
+
 // Based on Makefile examples in
 // http://www.cs.colby.edu/maxwell/courses/tutorials/maketutor/
 
@@ -56,7 +58,7 @@ const CC = 'gcc'
 const CFLAGS = '-I.'
 const DEPS = ['hellomake.h']
 const OBJ = ['hellomake.o', 'hellofunc.o']
-const bajelfile = {
+const BAJELFILE = {
 
   '%.o': {
     deps: ['%.c', ...DEPS],
@@ -74,6 +76,7 @@ const bajelfile = {
 }
 
 test.serial('Colby4', async t => {
+  const bajelfile = deepClone(BAJELFILE)
   const [code, stdout, stderr] = await build(bajelfile)
 
   t.deepEqual(stdout + stderr,
@@ -85,8 +88,10 @@ test.serial('Colby4', async t => {
 })
 
 test.serial('Up to date', async t => {
-  await build(bajelfile)
-  const [code, stdout, stderr] = await build(bajelfile)
+  const bajelfile1 = deepClone(BAJELFILE)
+  const bajelfile2 = deepClone(BAJELFILE)
+  await build(bajelfile1)
+  const [code, stdout, stderr] = await build(bajelfile2)
 
   t.regex(stdout + stderr,
     /bajel: 'hellomake' is up to date./)
@@ -95,11 +100,13 @@ test.serial('Up to date', async t => {
 })
 
 test.serial('One file updated', async t => {
-  await build(bajelfile)
+  const bajelfile1 = deepClone(BAJELFILE)
+  const bajelfile2 = deepClone(BAJELFILE)
+  await build(bajelfile1)
   await sleep(100)
   touch('hellomake.c')
   await sleep(100)
-  const [code, stdout, stderr] = await build(bajelfile)
+  const [code, stdout, stderr] = await build(bajelfile2)
 
   t.deepEqual(stdout,
     'gcc -c -o hellomake.o hellomake.c -I.\n' +
