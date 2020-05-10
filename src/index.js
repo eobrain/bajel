@@ -3,6 +3,7 @@ const StrConsole = require('./teeconsole.js')
 const { timestamp, walkDir } = require('./fs_util.js')
 const Variables = require('./variables.js')
 const Tasks = require('./tasks.js')
+const ago = require('./ago.js')
 
 // const trace = x => console.log('trace:', x) || x
 
@@ -180,32 +181,6 @@ module.exports = async (bajelfile) => {
   if (options.p) {
     tConsole.log(bajelfile)
     return [0, tStdout(), tStderr()]
-  }
-
-  const t0 = Date.now()
-
-  const ago = (t) => {
-    if (t === 0) {
-      return 'does not exist'
-    }
-    const ms = t0 - t
-    if (ms < 1000) {
-      return `modified ${ms.toPrecision(3)}ms ago`
-    }
-    const s = ms / 1000
-    if (s < 60) {
-      return `modified ${s.toPrecision(3)}s ago`
-    }
-    const min = s / 60
-    if (min < 60) {
-      return `modified ${min.toPrecision(3)} min ago`
-    }
-    const hour = min / 60
-    if (hour < 24) {
-      return `modified ${hour.toPrecision(3)} hours ago`
-    }
-    const day = hour / 24
-    return `modified ${day.toPrecision(3)} days ago`
   }
 
   try {
