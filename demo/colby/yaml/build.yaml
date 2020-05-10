@@ -1,12 +1,20 @@
+CC: gcc
+CFLAGS: -I.
+OBJ:
+- hellomake.o
+- hellofunc.o
+
 "%.o":
   deps:
     - "%.c"
     - hellomake.h
-  exec: gcc -c -o $@ $< -I.
+  exec: $(CC) -c -o $@ $< $(CFLAGS)
+
 hellomake:
   deps:
     - hellomake.o
     - hellofunc.o
-  exec: gcc -o $@ $+ -I.
+  exec: $(CC) -o $@ $+ $(CFLAGS)
+
 clean:
-  exec: rm -f hellomake hellomake.o hellofunc.o
+  exec: rm -f hellomake $(OBJ)

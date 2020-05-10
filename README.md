@@ -10,16 +10,17 @@ It will only build a target file if is out of date relative to its dependencies.
 You specify the build targets, their dependencies, and the build commands in a
 build file which has a very simple conceptual structure:
 
-* A list of targets, each of which has
-  * a list of dependencies (`deps`)
+* A set of targets, each of which has
+  * a set of dependencies (`deps`)
   * a command to execute (`exec`)
+* Declarations of variables that you can use in the `exec`
 
 You can write the build file in your favorite format:
 
 * TOML if you like things clean and readable
 * YAML if that's your thing
 * JSON if you want just the basics
-* JavaScript if you want to use variables for complex builds
+* JavaScript if you want more control
 * Markdown if you like literate programming
 
 ## Installation
@@ -64,71 +65,82 @@ The build file must be one of the following names:
 * `build.md`
 
 All these different languages are alternate syntaxes of specifying the same
-underlying build file structure, as shown by the following examples (based on a
-[makefile example][2]), each of which specify the same thing.
-(Though the JavaScript examples additionally show how variables can be used.)
+underlying build file structure, as shown by the following examples (based on a [makefile example][2]), each of which specify the same thing.
 
 ## Examples
 
 ### build.toml
 
 ```toml
+CC = "gcc"
+CFLAGS = "-I."
+OBJ = ["hellomake.o", "hellofunc.o"]
+
 ["%.o"]
 deps = ["%.c", "hellomake.h"]
-exec = "gcc -c -o $@ $< -I."
+exec = "$(CC) -c -o $@ $< $(CFLAGS)"
 
 [hellomake]
 deps = ["hellomake.o", "hellofunc.o"]
-exec = "gcc -o $@ $+ -I."
+exec = "$(CC) -o $@ $+ $(CFLAGS)"
 
 [clean]
-exec = "rm -f hellomake hellomake.o hellofunc.o"
+exec = "rm -f hellomake $(OBJ)"
 ```
 
 ### build.yaml
 
 ```yaml
+CC: gcc
+CFLAGS: -I.
+OBJ:
+- hellomake.o
+- hellofunc.o
+
 "%.o":
   deps:
     - "%.c"
     - hellomake.h
-  exec: gcc -c -o $@ $< -I.
+  exec: $(CC) -c -o $@ $< $(CFLAGS)
 
 hellomake:
   deps:
     - hellomake.o
     - hellofunc.o
-  exec: gcc -o $@ $+ -I.
+  exec: $(CC) -o $@ $+ $(CFLAGS)
 
 clean:
-  exec: rm -f hellomake hellomake.o hellofunc.o
+  exec: rm -f hellomake $(OBJ)
 ```
 
 ### build.json
 
 ```json
 {
+  "CC": "gcc",
+  "CFLAGS": "-I.",
+  "OBJ": [
+    "hellomake.o",
+    "hellofunc.o"
+  ],
   "%.o": {
     "deps": [
       "%.c",
       "hellomake.h"
     ],
-    "exec": "gcc -c -o $@ $< -I."
+    "exec": "$(CC) -c -o $@ $< $(CFLAGS)"
   },
-
   "hellomake": {
     "deps": [
       "hellomake.o",
       "hellofunc.o"
     ],
-    "exec": "gcc -o $@ $+ -I."
+    "exec": "$(CC) -o $@ $+ $(CFLAGS)"
   },
-
   "clean": {
-    "exec": "rm -f hellomake hellomake.o hellofunc.o"
+    "exec": "rm -f hellomake $(OBJ)"
   }
-}
-```
+}```
 
 ### build.cjs
 
@@ -222,6 +234,7 @@ rm -f hellomake hellomake.o hellofunc.o
   format. The only slightly tricky aspect is that it take advantage of the `%`
   wild card to create empty `.ok` files to indicate that the corresponding `.js`
   file has successfully passed the StandardJS linter.
+* Maxichrome's [build.toml][6] is another straightforward TOML build file.
 * The [build.cjs][4] for a blog uses JavaScript variables, but it is otherwise
   fairly simple.
 * Mergi's [build.mjs][3] is a fairly complex build file which uses the power of
@@ -233,31 +246,48 @@ rm -f hellomake hellomake.o hellofunc.o
 [3]: https://github.com/eobrain/mergi/blob/master/build.mjs
 [4]: https://github.com/eobrain/webhome/blob/master/build.cjs
 [5]: https://github.com/eobrain/diagmap/blob/master/build.toml
+[6]: https://github.com/eobrain/maxichrome/blob/master/build.toml
 
 ## Build File Structure
 
-A build file has a set of top level *target* strings, each of which may be
+A build file is an object with the following structure:
 
-1. A file, that may or may not already exist
-2. Or a file pattern with a `%` representing a wildcard.
-3. Otherwise just a label
+`{`
+  *variable*`:` *variableValue*`,`
+  *variable*`:` *variableValue*`,`
+  ...
+  *target*`:` `{deps:` *dependencies* `, exec: ` *shellCommand*`},`
+  *target*`:` `{deps:` *dependencies* `, exec: ` *shellCommand*`},`
+  ...
+`}`
 
-Each target may have a `deps` field which is a list of strings, which either:
+There can be any number of *variables* and *targets*.
+
+A *variableValue* is either a string or an arrays
+
+A *target* can be
+
+1. a file, that may or may not already exist
+2. or a file pattern with a `%` representing a wildcard.
+3. otherwise just a label
+
+The *dependencies* is an array of strings, each of which can be either:
 
 1. Another target in the build file
 2. An existing file or file pattern
 
-Each target may have an `exec` field which is a string that gets executed by the
+The *shellCommand* is a string that gets executed by the
 Linux-style shell, but only if the target does not exist as a file, or if the
 target is older than all the `deps`.
 
-The `exec` string may have some special patterns:
+The *shellCommand* may have some special patterns:
 
 * `%` expands to whatever matched the `%` in the target
 * `$@` is replaced by the target (after `%` expansion)
 * `$<` is replaced by the first `deps` field (after `%` expansion)
 * `$+` is replaced by the all the `deps` fields (after `%` expansion) separated
   by spaces
+* `$(`*variable*`)` is replaced by the corresponding *variableValue*. (And the *variableValue* may contain `$(`*variable*`)` patterns for other variables.)
 
 (If you are familiar with makefiles you will note that the semantics are the
 same, though much simplified.)
