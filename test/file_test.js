@@ -1,5 +1,5 @@
 const test = require('ava')
-const build = require('../index.js')
+const build = require('../src/index.js')
 
 test('directories are ignored when deps', async t => {
   // Using a target that is the same as an existing directory

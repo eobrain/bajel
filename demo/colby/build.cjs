@@ -1,10 +1,10 @@
 
 const exec = `
   cd $@
-  ../../../cli.js clean
-  ../../../cli.js
-  ../../../cli.js
-  ../../../cli.js clean
+  ../../../src/cli.js clean
+  ../../../src/cli.js
+  ../../../src/cli.js
+  ../../../src/cli.js clean
 `
 
 module.exports = {

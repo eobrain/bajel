@@ -1,5 +1,5 @@
 const test = require('ava')
-const Percent = require('../percent.js')
+const Percent = require('../src/percent.js')
 
 test('simple', t => {
   const p = Percent('abc%def')
@@ -40,4 +40,10 @@ test('no percent', t => {
 
 test('too many percents', t => {
   t.throws(() => Percent('a%b%c'))
+})
+
+test('toString', t => {
+  const p = Percent('abc%def')
+
+  t.deepEqual(p.toString(), 'Pattern{["abc","def"]}')
 })

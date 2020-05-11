@@ -1,6 +1,6 @@
 const test = require('ava')
 const fs = require('fs')
-const markdown = require('../markdown.js')
+const markdown = require('../src/markdown.js')
 const { writeTmpFile } = require('./_test_helper.js')
 
 test('colby', async t => {

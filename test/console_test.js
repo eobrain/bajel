@@ -1,5 +1,5 @@
 const test = require('ava')
-const build = require('../index.js')
+const build = require('../src/index.js')
 const fs = require('fs')
 const { buildFileTree, writeTmpFile } = require('./_test_helper.js')
 
@@ -113,7 +113,7 @@ test.serial('bad exec', async t => {
     'FAILED with code 1: \n' +
         'false\n' +
         '\n' +
-        'FAILED   fail : \n' +
+        'FAILED call fail:{exec:"false"}\n' +
         'bajel: recipe for target \'start\' failed\n' +
         'bajel: *** [error] Error 1\n'
   )
@@ -139,7 +139,7 @@ test.serial('bad exec debug', async t => {
       'FAILED with code 1: \n' +
             'false\n' +
             '\n' +
-            'FAILED   fail : \n' +
+            'FAILED call fail:{exec:"false"}\n' +
             'bajel: recipe for target \'start\' failed\n' +
             'bajel: *** [error] Error 1\n'
     )
@@ -194,11 +194,11 @@ test('duplicate targets', async t => {
     }
   )
 
-  t.deepEqual(stdout, ': foofoo\n')
   t.deepEqual(stderr,
     'Duplicate targets\n' +
-        '"test/colby/hellofunc.c": {"exec":": hello"}\n' +
-        '"test/colby/hellofunc.c": {"deps":["test/colby/hellofunc.bar"]}\n')
+        'test/colby/hellofunc.c:{exec:": hello"}\n' +
+        'test/colby/hellofunc.c:{deps:["test/colby/hellofunc.bar"]}\n')
+  t.deepEqual(stdout, ': foofoo\n')
   t.deepEqual(code, 0)
 })
 
@@ -249,9 +249,7 @@ test.serial('bad deps with print', async t => {
 
     t.deepEqual(stderr,
       'Problem expanding percents: Error: Deps should be an array in\n' +
-            '"foo":{\n' +
-            ' "deps": "string dep"\n' +
-            '}\n')
+            'foo:{deps:"string dep"}\n')
     t.deepEqual(stdout,
       '{ foo: { deps: \'string dep\' } }\n')
     t.deepEqual(code, 1)
