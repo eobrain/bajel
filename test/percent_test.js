@@ -41,3 +41,9 @@ test('no percent', t => {
 test('too many percents', t => {
   t.throws(() => Percent('a%b%c'))
 })
+
+test('toString', t => {
+  const p = Percent('abc%def')
+
+  t.deepEqual(p.toString(), 'Pattern{["abc","def"]}')
+})

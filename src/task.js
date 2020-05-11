@@ -28,7 +28,8 @@ class Task {
     return this._target
   }
 
-  expanded (file, match, expand) {
+  expanded (file, match) {
+    const expand = x => x.split('%').join(match)
     const expandedTarget = expand(this._target)
     const object = { }
     if (this._deps) {

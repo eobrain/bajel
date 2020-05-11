@@ -71,10 +71,9 @@ module.exports = class {
       for (const file of [...files, ...this.targets()]) {
         const match = fromPattern.match(file)
         if (match) {
-          const expand = x => x.split('%').join(match)
           matchHappened = expansionHappened = true
           toRemove.push(task.target())
-          const expandedTask = task.expanded(file, match, expand)
+          const expandedTask = task.expanded(file, match)
           expandedTask.infiniteLoopCheck(target => this.has(target))
           toAdd[expandedTask.target()] = expandedTask
         }
