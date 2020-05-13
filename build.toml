@@ -1,0 +1,15 @@
+#!src/cli.js check
+
+[check]
+deps = [
+    "src/index.js",
+    "src/teeconsole.js",
+    "src/fs_util.js",
+    "src/variables.js",
+    "src/tasks.js",
+    "src/percent.js",
+    "src/exec.js",
+    "src/task.js",
+    "src/ago.js"
+]
+exec = "java -jar tools/closure-compiler-v20200504.jar -O ADVANCED --process_common_js_modules --dependency_mode SORT_ONLY --env CUSTOM --checks_only --process_common_js_modules --module_resolution NODE --externs src/externs.js --js $+"

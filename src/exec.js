@@ -1,4 +1,5 @@
-const { spawn } = require('child_process')
+const externalRequire = require
+const { spawn } = externalRequire('child_process')
 
 const shellTrim = cmd => cmd.split('\n').map(s => s.trim()).join('\n')
 

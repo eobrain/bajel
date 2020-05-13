@@ -1,8 +1,13 @@
-const fs = require('fs')
+const externalRequire = require
+const fs = externalRequire('fs')
 const Percent = require('./percent.js')
 const printAndExec = require('./exec.js')
 
 class Task {
+  /**
+   * @param {string} target
+   * @param {!Object} task
+   */
   constructor (target, { deps, exec, call }) {
     this._target = target
     this._deps = deps
@@ -10,6 +15,7 @@ class Task {
     this._call = call
   }
 
+  /** @returns {string} */
   toString () {
     const propertyStrings = []
     if (this._deps) {
@@ -24,10 +30,16 @@ class Task {
     return `${this._target}:{${propertyStrings.join()}}`
   }
 
+  /** @returns {string} */
   target () {
     return this._target
   }
 
+  /**
+   * @param {string} file
+   * @param {string} match
+   * @returns {!Task}
+   */
   expanded (file, match) {
     const expand = x => x.split('%').join(match)
     const expandedTarget = expand(this._target)
@@ -44,6 +56,7 @@ class Task {
     return new Task(expandedTarget, object)
   }
 
+  /** @returns {Percent|undefined} */
   removePatternDep () {
     if (this._deps === null || this._deps === undefined) {
       return undefined
@@ -52,8 +65,8 @@ class Task {
       throw new Error('Deps should be an array in\n' + this.toString())
     }
     for (let i = 0; i < this._deps.length; ++i) {
-      const fromPattern = Percent(this._deps[i])
-      if (fromPattern) {
+      const fromPattern = new Percent(this._deps[i])
+      if (fromPattern.hasMatch()) {
         delete this._deps[i]
         this._deps = this._deps.filter(d => d)
         return fromPattern

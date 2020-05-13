@@ -1,5 +1,7 @@
-const { Writable } = require('stream')
-const { Console } = require('console')
+const externalRequire = require
+
+const { Writable } = externalRequire('stream')
+const { Console } = externalRequire('console')
 
 const TeeStreamToString = wrapped => {
   let string = ''
