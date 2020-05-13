@@ -1,14 +1,4 @@
 
-const matchPatt = ([prefix, suffix]) => (s) => {
-  if (s.length <= prefix.length + suffix.length) {
-    return undefined
-  }
-  if (s.startsWith(prefix) && s.endsWith(suffix)) {
-    return s.substring(prefix.length, s.length - suffix.length)
-  }
-  return undefined
-}
-
 module.exports = class {
   constructor (pattern) {
     const fixes = pattern.split('%')
