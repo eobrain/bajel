@@ -1,5 +1,6 @@
-const readline = require('readline')
-const fs = require('fs')
+const externalRequire = require
+const readline = externalRequire('readline')
+const fs = externalRequire('fs')
 
 const targetPattern = /##\s*(\S+)/
 const depsPattern = /Deps: (`.*`)/

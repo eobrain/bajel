@@ -8,8 +8,15 @@ module.exports = class {
    * @param {!Object} tConsole use like built-in console
    */
   constructor (bajelfile, tConsole) {
+    /** @private
+     * @type {!Object}
+     */
     this._tConsole = tConsole
+    /** @private
+     * @type {!Object}
+     */
     this._tasks = {}
+
     for (const key in bajelfile) {
       const value = bajelfile[key]
       if (typeof value === 'object' && !Array.isArray(value)) {
@@ -19,7 +26,7 @@ module.exports = class {
         this._tasks[key] = new Task(key, value)
       }
     }
-    /** @type {!Array<string>} */
+    /** @private @type {!Array<string>} */
     this._explicitTargets = Object.keys(this._tasks).filter(k => !k.includes('%'))
   }
 

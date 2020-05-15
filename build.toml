@@ -1,7 +1,14 @@
-#!src/cli.js check
+#!src/cli.js default
+
+[default]
+deps=["check", "test"]
+
+[test]
+exec="npx ava"
 
 [check]
 deps = [
+    "src/markdown.js",
     "src/index.js",
     "src/teeconsole.js",
     "src/fs_util.js",

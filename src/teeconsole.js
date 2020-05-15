@@ -3,6 +3,10 @@ const externalRequire = require
 const { Writable } = externalRequire('stream')
 const { Console } = externalRequire('console')
 
+/**
+ * @param {!Object} wrapped
+ * @return {!Object}
+ */
 const TeeStreamToString = wrapped => {
   let string = ''
   const stream = Writable()
@@ -15,6 +19,9 @@ const TeeStreamToString = wrapped => {
   return { stream, toString }
 }
 
+/**
+ * @returns {!Object}
+ */
 module.exports = () => {
   const stdout = TeeStreamToString(process.stdout)
   const stderr = TeeStreamToString(process.stderr)
