@@ -1,6 +1,8 @@
+const externalRequire = require
+
 // File system utilities
-const fs = require('fs')
-const path = require('path')
+const fs = externalRequire('fs')
+const path = externalRequire('path')
 
 /** @returns timestamp if it is a file, or zero if it does not exist or is a directory. */
 const timestamp = path =>

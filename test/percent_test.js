@@ -2,7 +2,7 @@ const test = require('ava')
 const Percent = require('../src/percent.js')
 
 test('simple', t => {
-  const p = Percent('abc%def')
+  const p = new Percent('abc%def')
 
   t.falsy(p.match('def'))
   t.falsy(p.match(''))
@@ -10,7 +10,7 @@ test('simple', t => {
 })
 
 test('noprefix', t => {
-  const p = Percent('%def')
+  const p = new Percent('%def')
 
   t.falsy(p.match('def'))
   t.falsy(p.match(''))
@@ -18,7 +18,7 @@ test('noprefix', t => {
 })
 
 test('no suffix', t => {
-  const p = Percent('abc%')
+  const p = new Percent('abc%')
 
   t.falsy(p.match('def'))
   t.falsy(p.match(''))
@@ -26,16 +26,16 @@ test('no suffix', t => {
 })
 
 test('anything', t => {
-  const p = Percent('%')
+  const p = new Percent('%')
 
   t.falsy(p.match(''))
   t.deepEqual(p.match('abcPQRdef'), 'abcPQRdef')
 })
 
 test('no percent', t => {
-  const p = Percent('abc')
+  const p = new Percent('abc')
 
-  t.falsy(p)
+  t.falsy(p.hasMatch())
 })
 
 test('too many percents', t => {
@@ -43,7 +43,7 @@ test('too many percents', t => {
 })
 
 test('toString', t => {
-  const p = Percent('abc%def')
+  const p = new Percent('abc%def')
 
   t.deepEqual(p.toString(), 'Pattern{["abc","def"]}')
 })

@@ -1,5 +1,9 @@
 module.exports = class {
+  /**
+   * @param {!Object} bajelfile
+   */
   constructor (bajelfile) {
+    /** @private @type {!Object} */
     this._dict = {}
     for (const key in bajelfile) {
       const value = bajelfile[key]
@@ -9,6 +13,11 @@ module.exports = class {
     }
   }
 
+  /**
+   * @param {string} string
+   * @param {!Object} prev={}
+   * @return {string}
+   */
   interpolation (string, prev = {}) {
     return string.replace(/\$\((\w+)\)/g, (_, variableName) => {
       if (prev[variableName]) {

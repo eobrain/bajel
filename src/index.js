@@ -1,4 +1,6 @@
-const getopts = require('getopts')
+const externalRequire = require
+
+const getopts = externalRequire('getopts')
 const StrConsole = require('./teeconsole.js')
 const { timestamp } = require('./fs_util.js')
 const Variables = require('./variables.js')

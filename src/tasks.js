@@ -2,45 +2,72 @@ const Task = require('./task.js')
 const { timestamp, walkDir } = require('./fs_util.js')
 const ago = require('./ago.js')
 
+// const tee = x => { console.warn(x); return x }
+
 module.exports = class {
+  /**
+   * @param {!Object<string,{deps:?Array<string>, exec:?string, call}|string|Array<String>>} bajelfile
+   * @param {{error,warn,log}} tConsole use like built-in console
+   */
   constructor (bajelfile, tConsole) {
+    /** @private
+     * @type {{error,warn,log}}
+     */
     this._tConsole = tConsole
+
+    /** @private
+     * @type {!Object<string,!Task>}}
+     */
     this._tasks = {}
+
     for (const key in bajelfile) {
       const value = bajelfile[key]
       if (typeof value === 'object' && !Array.isArray(value)) {
+        if (value === null) {
+          throw new Error('Assertion failed')
+        }
         this._tasks[key] = new Task(key, value)
       }
     }
+    /** @private @type {!Array<string>} */
     this._explicitTargets = Object.keys(this._tasks).filter(k => !k.includes('%'))
   }
 
+  /** @returns {!Array<string>} */
   explicitTargets () {
     return this._explicitTargets
   }
 
+  /** @returns {boolean} */
   has (target) {
     return !!this._tasks[target]
   }
 
+  /** @returns {!Task} */
   get (target) {
-    return this._tasks[target] || new Task({}, this._tConsole)
+    return this._tasks[target] || new Task(target, { deps: [], exec: null })
   }
 
+  /** @returns {!Array<string>} */
   targets () {
     return Object.keys(this._tasks)
   }
 
+  /** @private
+   * @param {function(!Task)} callback
+   */
   _forTask (callback) {
     for (const target in this._tasks) {
       callback(this._tasks[target])
     }
   }
 
+  /** @private */
   _removeAll (toRemove) {
     toRemove.forEach(target => { delete this._tasks[target] })
   }
 
+  /** @private */
   _addAll (toAdd) {
     for (const target in toAdd) {
       if (this._tasks[target]) {
@@ -52,6 +79,7 @@ module.exports = class {
     }
   }
 
+  /** @param {!Object} tConsole use like built-in console */
   expandDeps (tConsole) {
     const files = []
     walkDir('.', f => { files.push(f) })
@@ -88,9 +116,9 @@ module.exports = class {
   }
 
   /**
- * @param {string} target being built
- * @returns {[errorCode, number, recipeHappened]} whether succeeded and timestamp in ms of latest file change
- * */
+   * @param {string} target being built
+   * @returns {!Promise<!Array>} [errorCode, number, recipeHappened] whether succeeded and timestamp in ms of latest file change
+   */
   async recurse (prevTargets, target, variables, dryRun, debug) {
     const debugOut = f => {
       if (debug) {

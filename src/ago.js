@@ -1,4 +1,8 @@
 
+/**
+ * @param {number} t
+ * @return {string}
+ */
 module.exports = t => {
   const t0 = Date.now()
 
