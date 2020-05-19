@@ -1,8 +1,17 @@
 const Task = require('./task.js')
 const { timestamp, walkDir } = require('./fs_util.js')
 const ago = require('./ago.js')
+const externalRequire = require
+const fs = externalRequire('fs')
+// const tee = require('./tee.js')
 
-// const tee = x => { console.warn(x); return x }
+const fileContent = path => {
+  try {
+    return fs.readFileSync(path, 'utf8')
+  } catch (e) {
+    return '' + e
+  }
+}
 
 module.exports = class {
   /**
@@ -117,7 +126,7 @@ module.exports = class {
 
   /**
    * @param {string} target being built
-   * @returns {!Promise<!Array>} [errorCode, number, recipeHappened] whether succeeded and timestamp in ms of latest file change
+   * @returns {!Promise<{ code: number, updatedTime: number, recipeHappened:boolean, result:? }>} whether succeeded and timestamp in ms of latest file change
    */
   async recurse (prevTargets, target, variables, dryRun, debug) {
     const debugOut = f => {
@@ -129,10 +138,9 @@ module.exports = class {
     let recipeHappened = false
     const targetTime = await timestamp(target)
     if (!this.has(target) && targetTime === 0) {
-      this._tConsole.warn(target,
-        'is not a file and is not one of the build targets:',
-        this.targets().sort())
-      return [1]
+      const result = 'is not a file and is not one of the build targets:'
+      this._tConsole.warn(target, result, this.targets().sort())
+      return { code: 1, updatedTime: -Infinity, recipeHappened, result }
     }
     const task = this.get(target)
 
@@ -143,32 +151,45 @@ module.exports = class {
     prevTargets = [...prevTargets, target]
 
     let lastDepsTime = 0
+    /** @type {!Object<string,?>} */
+    const depResults = {}
     for (const dep of task.theDeps()) {
-      const [depCode, depTime, depRecipeHappened] = await this.recurse(prevTargets, dep, variables, dryRun, debug)
+      const {
+        code: depCode,
+        updatedTime: depTime,
+        recipeHappened: depRecipeHappened,
+        result: depResult
+      } = await this.recurse(prevTargets, dep, variables, dryRun, debug)
       recipeHappened = recipeHappened || depRecipeHappened
       if (depCode !== 0) {
-        debugOut(() => `-- execution of dep target "${dep}" failed. Stopping.`)
-        return [depCode]
+        const result = `-- execution of dep target "${dep}" failed. Stopping.`
+        debugOut(() => result)
+        return { code: depCode, updatedTime: -Infinity, recipeHappened, result }
       }
+      depResults[dep] = depResult
       if (depTime > lastDepsTime) {
         lastDepsTime = depTime
       }
     }
 
     debugOut(() => `${ago(targetTime)} and its most recent deps ${ago(lastDepsTime)}`)
+    /** @type {?} */
+    let outResult
     if (task.hasRecipe() && (targetTime === 0 || targetTime < lastDepsTime)) {
       debugOut(() => targetTime === 0
         ? 'does not exist and has a recipe'
         : 'is older than the most recent dep and has a recipe'
       )
-      const callHappened = task.doCall(dryRun, this._tConsole)
+      const { callHappened, result } = task.doCall(dryRun, this._tConsole, depResults)
       recipeHappened = recipeHappened || callHappened
-      if (!callHappened) {
+      if (callHappened) {
+        outResult = result
+      } else {
         const code = await task.doExec(variables, dryRun, this._tConsole)
         recipeHappened = true
         if (code !== 0) {
           this._tConsole.error('FAILED call', task.toString())
-          return [code]
+          return { code, updatedTime: -Infinity, recipeHappened, result }
         }
       }
     } else {
@@ -180,7 +201,10 @@ module.exports = class {
         )
       )
     }
+    if (!outResult) {
+      outResult = fileContent(target)
+    }
     const updatedTime = Math.max(lastDepsTime, await timestamp(target))
-    return [0, updatedTime, recipeHappened]
+    return { code: 0, updatedTime, recipeHappened, result: outResult }
   }
 }

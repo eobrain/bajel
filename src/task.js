@@ -1,7 +1,9 @@
-const externalRequire = require
-const fs = externalRequire('fs')
 const Percent = require('./percent.js')
 const printAndExec = require('./exec.js')
+// const tee = require('./tee.js')
+
+// jsdoc type-checking only
+const Variables = require('./variables.js') // eslint-disable-line no-unused-vars
 
 class Task {
   /**
@@ -50,9 +52,6 @@ class Task {
     if (this._exec) {
       object.exec = expand(this._exec)
     }
-    if (this._call) {
-      object.call = $ => this._call({ ...$, match })
-    }
     return new Task(expandedTarget, object)
   }
 
@@ -96,28 +95,29 @@ class Task {
     return !!this._exec || !!this._call
   }
 
-  doCall (dryRun, tConsole) {
+  /**
+   * @param {boolean} dryRun
+   * @param {!Object} tConsole
+   * @param {!Object<string,?>} depResults
+   * @return {{callHappened: boolean, result: ?}}
+   */
+  doCall (dryRun, tConsole, depResults) {
     if (!this._call) {
-      return false
+      return { callHappened: false, result: '** no call **' }
     }
-    const deps = this._deps || []
-    const source = deps.length > 0 ? deps[0] : '***no-source***'
-    const sources = deps.join(' ')
-
-    const echo = tConsole.log
-    tConsole.log(`calling function: ${sources} --> ${this._target}`)
+    tConsole.log(`calling function: --> ${this._target}`)
     if (dryRun) {
-      return true
+      return { callHappened: true, result: '** dry run **' }
     }
-    this._call({
-      target: { path: this._target, write: s => fs.writeFileSync(this._target, s) },
-      source: { path: source, read: () => fs.readFileSync(source) },
-      sources: deps.map(p => ({ path: p, read: () => fs.readFileSync(p) })),
-      echo
-    })
-    return true
+    return { callHappened: true, result: this._call(depResults) }
   }
 
+  /**
+   * @param {!Variables} variables
+   * @param {boolean} dryRun
+   * @param {!Object} tConsole
+   * @returns {!Promise<number>}
+   */
   async doExec (variables, dryRun, tConsole) {
     if (!this._exec.replace) {
       throw new TypeError(`exec of target "${this._target}" should be a string`)
