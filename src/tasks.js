@@ -2,18 +2,21 @@ const Task = require('./task.js')
 const { timestamp, walkDir } = require('./fs_util.js')
 const ago = require('./ago.js')
 
+// const tee = x => { console.warn(x); return x }
+
 module.exports = class {
   /**
-   * @param {!Object} bajelfile
-   * @param {!Object} tConsole use like built-in console
+   * @param {!Object<string,{deps:?Array<string>, exec:?string, call}|string|Array<String>>} bajelfile
+   * @param {{error,warn,log}} tConsole use like built-in console
    */
   constructor (bajelfile, tConsole) {
     /** @private
-     * @type {!Object}
+     * @type {{error,warn,log}}
      */
     this._tConsole = tConsole
+
     /** @private
-     * @type {!Object}
+     * @type {!Object<string,!Task>}}
      */
     this._tasks = {}
 
@@ -42,7 +45,7 @@ module.exports = class {
 
   /** @returns {!Task} */
   get (target) {
-    return this._tasks[target] || new Task(target, {})
+    return this._tasks[target] || new Task(target, { deps: [], exec: null })
   }
 
   /** @returns {!Array<string>} */
@@ -50,7 +53,9 @@ module.exports = class {
     return Object.keys(this._tasks)
   }
 
-  /** @private */
+  /** @private
+   * @param {function(!Task)} callback
+   */
   _forTask (callback) {
     for (const target in this._tasks) {
       callback(this._tasks[target])

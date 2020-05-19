@@ -6,7 +6,7 @@ const printAndExec = require('./exec.js')
 class Task {
   /**
    * @param {string} target
-   * @param {!Object} task
+   * @param {!{ deps:?Array<string>, exec:?string, call }} task
    */
   constructor (target, { deps, exec, call }) {
     this._target = target
@@ -76,7 +76,8 @@ class Task {
   }
 
   infiniteLoopCheck (alreadyDefined) {
-    for (const expandedDep of this._deps) {
+    const deps = this._deps || []
+    for (const expandedDep of deps) {
       if (!expandedDep.match(/%/) && alreadyDefined(expandedDep)) {
         throw new Error(
             `infinite loop after expansion ${this.target()} → ${expandedDep}`)
