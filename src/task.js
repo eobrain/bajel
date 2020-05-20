@@ -1,6 +1,6 @@
 const Percent = require('./percent.js')
 const printAndExec = require('./exec.js')
-// const tee = require('./tee.js')
+//const tee = require('./tee.js')
 
 // jsdoc type-checking only
 const Variables = require('./variables.js') // eslint-disable-line no-unused-vars
@@ -53,6 +53,7 @@ class Task {
     if (this._exec) {
       object.exec = expand(this._exec)
     }
+    object.call = this._call
     return new Task(expandedTarget, object)
   }
 

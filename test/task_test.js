@@ -12,6 +12,16 @@ test('toString', t => {
     'aTarget:{deps:["aDep","anotherDep"],exec:"anExec",call:() => \'aCall\'}')
 })
 
+test('call', t => {
+  const task = new Task('aTarget', {
+    deps: [],
+    call: () => 'aResult'
+  })
+  const { callHappened, result } = task.doCall(false, console, [])
+  t.deepEqual(result, 'aResult')
+  t.truthy(callHappened)
+})
+
 /* test('expanded -- noop', t => {
   const task = new Task('aTarget', {
     deps: ['aDep', 'anotherDep'],
