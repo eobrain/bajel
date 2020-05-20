@@ -195,7 +195,7 @@ module.exports = class {
       if (callHappened) {
         outResult = result
       } else {
-        const code = await task.doExec(variables, dryRun, this._tConsole)
+        const code = await task.doExec(variables, dryRun, this._tConsole, depResults)
         recipeHappened = true
         if (code !== 0) {
           this._tConsole.error('FAILED call', task.toString())

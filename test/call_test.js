@@ -51,3 +51,22 @@ test('read', async t => {
   t.deepEqual(results, ['/tmp/ccc=CCC\n'])
   t.deepEqual(code, 0)
 })
+
+test('call to exec', async t => {
+  const [code, stdout, stderr, result] = await build({
+    ppp: {
+      deps: ['qqq'],
+      exec: 'echo $1'
+    },
+    qqq: {
+      call: deps => 'QQQ'
+    }
+  })
+  t.deepEqual(stderr, '')
+  t.deepEqual(stdout,
+    'calling function: --> qqq\n' +
+  'echo QQQ\n' +
+  'QQQ\n\n'
+  )
+  t.deepEqual(code, 0)
+})

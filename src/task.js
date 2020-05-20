@@ -1,6 +1,6 @@
 const Percent = require('./percent.js')
 const printAndExec = require('./exec.js')
-//const tee = require('./tee.js')
+// const tee = require('./tee.js')
 
 // jsdoc type-checking only
 const Variables = require('./variables.js') // eslint-disable-line no-unused-vars
@@ -93,6 +93,10 @@ class Task {
     }
   }
 
+  hasDeps () {
+    return this._deps && this._deps.length > 0
+  }
+
   /**
    * @param {!Graph} graph
    */
@@ -127,22 +131,28 @@ class Task {
    * @param {!Variables} variables
    * @param {boolean} dryRun
    * @param {!Object} tConsole
+   * @param {!Object<string,?>} depResults
    * @returns {!Promise<number>}
    */
-  async doExec (variables, dryRun, tConsole) {
+  async doExec (variables, dryRun, tConsole, depResults) {
     if (!this._exec.replace) {
       throw new TypeError(`exec of target "${this._target}" should be a string`)
     }
     const deps = this._deps || []
-    const source = deps.length > 0 ? deps[0] : '***no-source***'
-    const sources = deps.join(' ')
-
-    const substitutedExec = variables.interpolation(
-      this._exec
-        .replace(/\$@/g, this._target)
-        .replace(/\$</g, source)
-        .replace(/\$\+/g, sources)
-    )
+    const dep = deps // .map(dep => depResults[dep] || dep)
+    const source = dep.length > 0 ? dep[0] : '***no-source***'
+    const sources = dep.join(' ')
+    let exec = this._exec
+      .replace(/\$@/g, this._target)
+      .replace(/\$</g, source)
+      .replace(/\$\+/g, sources)
+    deps.forEach((dep, i) => {
+      const depResult = depResults[dep]
+      if (depResult) {
+        exec = exec.replace(new RegExp(`\\$${i + 1}`, 'g'), depResult)
+      }
+    })
+    const substitutedExec = variables.interpolation(exec)
     return printAndExec(substitutedExec, dryRun, tConsole)
   }
 }
