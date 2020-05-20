@@ -1,8 +1,8 @@
 const externalRequire = require
-
-// File system utilities
 const fs = externalRequire('fs')
 const path = externalRequire('path')
+const tmp = externalRequire('tmp')
+// const tee = require('./tee.js')
 
 /** @returns timestamp if it is a file, or zero if it does not exist or is a directory. */
 const timestamp = path =>
@@ -30,4 +30,14 @@ const walkDir = (dir, callback) => {
   })
 }
 
-module.exports = { timestamp, walkDir }
+/**
+ * @param {string} content
+ * @return {string} path written
+ */
+const writeTmp = content => {
+  const path = tmp.fileSync().name
+  fs.writeFileSync(path, content)
+  return path
+}
+
+module.exports = { timestamp, walkDir, writeTmp }

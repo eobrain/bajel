@@ -1,5 +1,6 @@
 const Percent = require('./percent.js')
 const printAndExec = require('./exec.js')
+const { writeTmp } = require('./fs_util.js')
 // const tee = require('./tee.js')
 
 // jsdoc type-checking only
@@ -149,7 +150,11 @@ class Task {
     deps.forEach((dep, i) => {
       const depResult = depResults[dep]
       if (depResult) {
-        exec = exec.replace(new RegExp(`\\$${i + 1}`, 'g'), depResult)
+        const regexp = new RegExp(`\\$${i + 1}`, 'g')
+        if (exec.match(regexp)) {
+          const tmpPath = writeTmp(depResult)
+          exec = exec.replace(regexp, tmpPath)
+        }
       }
     })
     const substitutedExec = variables.interpolation(exec)

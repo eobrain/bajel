@@ -56,17 +56,15 @@ test('call to exec', async t => {
   const [code, stdout, stderr, result] = await build({
     ppp: {
       deps: ['qqq'],
-      exec: 'echo $1'
+      exec: 'cat $1'
     },
     qqq: {
       call: deps => 'QQQ'
     }
   })
   t.deepEqual(stderr, '')
-  t.deepEqual(stdout,
-    'calling function: --> qqq\n' +
-  'echo QQQ\n' +
-  'QQQ\n\n'
-  )
+  t.regex(stdout, /calling function: --> qqq/m)
+  t.regex(stdout, /cat /m)
+  t.regex(stdout, /^QQQ$/m)
   t.deepEqual(code, 0)
 })
