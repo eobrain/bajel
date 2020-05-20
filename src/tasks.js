@@ -1,4 +1,5 @@
 const Task = require('./task.js')
+const Graph = require('./graph.js')
 const { timestamp, walkDir } = require('./fs_util.js')
 const ago = require('./ago.js')
 const externalRequire = require
@@ -29,6 +30,12 @@ module.exports = class {
      */
     this._tasks = {}
 
+    /**
+     * @private
+     * @type {!Graph}
+     */
+    this._graph = new Graph()
+
     for (const key in bajelfile) {
       const value = bajelfile[key]
       if (typeof value === 'object' && !Array.isArray(value)) {
@@ -36,6 +43,7 @@ module.exports = class {
           throw new Error('Assertion failed')
         }
         this._tasks[key] = new Task(key, value)
+        this._tasks[key].addArcs(this._graph)
       }
     }
     /** @private @type {!Array<string>} */
@@ -110,9 +118,11 @@ module.exports = class {
         if (match) {
           matchHappened = expansionHappened = true
           toRemove.push(task.target())
+          this._graph.remove(task.target())
           const expandedTask = task.expanded(file, match)
-          expandedTask.infiniteLoopCheck(target => this.has(target))
           toAdd[expandedTask.target()] = expandedTask
+          expandedTask.addArcs(this._graph)
+          expandedTask.infiniteLoopCheck(this._graph)
         }
       }
       if (!matchHappened) {

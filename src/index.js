@@ -79,14 +79,14 @@ module.exports = async (bajelfile) => {
 
   try {
     // Phase 2: Executions
-    const { code, updatedTime, recipeHappened } = await tasks.recurse([], start, variables, dryRun, options.debug)
+    const { code, updatedTime, recipeHappened, result } = await tasks.recurse([], start, variables, dryRun, options.debug)
 
     if (code !== 0) {
       tConsole.error(`bajel: recipe for target '${start}' failed\nbajel: *** [error] Error ${code}`)
       return [code, tStdout(), tStderr()]
     }
     if (dryRun) {
-      return [0, tStdout(), tStderr()]
+      return [0, tStdout(), tStderr(), result]
     }
     const phony = (await timestamp(start) === 0)
     if (phony && !recipeHappened) {
@@ -95,10 +95,10 @@ module.exports = async (bajelfile) => {
     if (!phony && !recipeHappened) {
       tConsole.log(`bajel: '${start}' is up to date. (${ago(updatedTime)})`)
     }
-    return [0, tStdout(), tStderr()]
+    return [0, tStdout(), tStderr(), result]
   } catch (e) {
     console.error(e)
     tConsole.error(e.toString())
-    return [1, tStdout(), tStderr()]
+    return [1, tStdout(), tStderr(), e.toString()]
   }
 }

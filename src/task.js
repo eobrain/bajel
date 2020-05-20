@@ -4,6 +4,7 @@ const printAndExec = require('./exec.js')
 
 // jsdoc type-checking only
 const Variables = require('./variables.js') // eslint-disable-line no-unused-vars
+const Graph = require('./graph.js') // eslint-disable-line no-unused-vars
 
 class Task {
   /**
@@ -74,13 +75,13 @@ class Task {
     return undefined
   }
 
-  infiniteLoopCheck (alreadyDefined) {
-    const deps = this._deps || []
-    for (const expandedDep of deps) {
-      if (!expandedDep.match(/%/) && alreadyDefined(expandedDep)) {
-        throw new Error(
-            `infinite loop after expansion ${this.target()} → ${expandedDep}`)
-      }
+  /**
+   * @param {!Graph} graph
+   */
+  infiniteLoopCheck (graph) {
+    const loop = graph.findLoop(this._target)
+    if (loop) {
+      throw new Error(`infinite loop after expansion ${loop}`)
     }
   }
 
@@ -88,6 +89,15 @@ class Task {
     const deps = this._deps || []
     for (let i = 0; i < deps.length; ++i) {
       yield deps[i]
+    }
+  }
+
+  /**
+   * @param {!Graph} graph
+   */
+  addArcs (graph) {
+    for (const dep of this.theDeps()) {
+      graph.arc(this._target, dep)
     }
   }
 

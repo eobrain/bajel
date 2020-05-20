@@ -17,6 +17,7 @@ deps = [
     "src/percent.js",
     "src/exec.js",
     "src/task.js",
+    "src/graph.js",
     "src/tee.js",
     "src/ago.js"
 ]

@@ -72,7 +72,7 @@ test.serial('expansion infinite loop', async t => {
 
   t.deepEqual(stdout, '')
   t.deepEqual(stderr,
-    'Problem expanding percents: Error: infinite loop after expansion test/colby/hellofunc.bar → test/colby/hellofunc.c\n')
+    'Problem expanding percents: Error: infinite loop after expansion test/colby/hellofunc.bar → test/colby/hellofunc.c → test/colby/hellofunc.bar\n')
   t.deepEqual(code, 1)
 })
 
