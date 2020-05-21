@@ -249,6 +249,43 @@ rm -f hellomake hellomake.o hellofunc.o
 [5]: https://github.com/eobrain/diagmap/blob/master/build.toml
 [6]: https://github.com/eobrain/maxichrome/blob/master/build.toml
 
+### Advanced feature: JavaScript functions as actions
+
+As an alternative to using the `exec` property to specify a shell command to execute, you can use the `call` property to specify a JavaScript function to be executed.
+
+The function takes a `deps` parameter containing the values returned by the dependency functions.
+
+The example below shows how this can be used to create something that works like a spreadsheet.
+
+```js
+export default {
+
+  result: {
+    deps: ['B4'],
+    exec: 'cat $0'
+  },
+
+  A1: {
+    call: deps => 10
+  },
+  A2: {
+    call: deps => 12
+  },
+  A3: {
+    call: deps => 14
+  },
+  A4: {
+    deps: ['A1', 'A2', 'A3'],
+    call: ({ A1, A2, A3 }) => A1 + A2 + A3
+  },
+
+  'B%': {
+    deps: ['A%'],
+    call: deps => deps[0] * 100
+  }
+}
+```
+
 ## Build File Structure
 
 A build file is an object with the following structure:
@@ -294,7 +331,7 @@ The *shellCommand* may have some special patterns:
 * `$+` is replaced by the all the `deps` fields (after `%` expansion) separated
   by spaces
 * `$(`*variable*`)` is replaced by the corresponding *variableValue*. (And the *variableValue* may contain `$(`*variable*`)` patterns for other variables.)
-* `$i` (where `i` is an integer) is replaced by the return value of the `call` function the `i`th dep.
+* `$i` (where `i` is an integer) is replaced by the path to a tmp file containing the return value of the `call` function the `i`th dep (zero-based).
 
 (If you are familiar with makefiles you will note that the semantics are the
 same, though much simplified.)
