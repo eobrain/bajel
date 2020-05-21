@@ -1,7 +1,11 @@
-const externalRequire = require
-const fs = externalRequire('fs')
 const Percent = require('./percent.js')
 const printAndExec = require('./exec.js')
+const { writeTmp } = require('./fs_util.js')
+// const tee = require('./tee.js')
+
+// jsdoc type-checking only
+const Variables = require('./variables.js') // eslint-disable-line no-unused-vars
+const Graph = require('./graph.js') // eslint-disable-line no-unused-vars
 
 class Task {
   /**
@@ -50,9 +54,7 @@ class Task {
     if (this._exec) {
       object.exec = expand(this._exec)
     }
-    if (this._call) {
-      object.call = $ => this._call({ ...$, match })
-    }
+    object.call = this._call
     return new Task(expandedTarget, object)
   }
 
@@ -75,13 +77,13 @@ class Task {
     return undefined
   }
 
-  infiniteLoopCheck (alreadyDefined) {
-    const deps = this._deps || []
-    for (const expandedDep of deps) {
-      if (!expandedDep.match(/%/) && alreadyDefined(expandedDep)) {
-        throw new Error(
-            `infinite loop after expansion ${this.target()} → ${expandedDep}`)
-      }
+  /**
+   * @param {!Graph} graph
+   */
+  infiniteLoopCheck (graph) {
+    const loop = graph.findLoop(this._target)
+    if (loop) {
+      throw new Error(`infinite loop after expansion ${loop}`)
     }
   }
 
@@ -92,46 +94,76 @@ class Task {
     }
   }
 
+  hasDeps () {
+    return this._deps && this._deps.length > 0
+  }
+
+  /**
+   * @param {!Graph} graph
+   */
+  addArcs (graph) {
+    for (const dep of this.theDeps()) {
+      graph.arc(this._target, dep)
+    }
+  }
+
   hasRecipe () {
     return !!this._exec || !!this._call
   }
 
-  doCall (dryRun, tConsole) {
+  /**
+   * @param {boolean} dryRun
+   * @param {!Object} tConsole
+   * @param {!Object<string,?>} depResults
+   * @return {{callHappened: boolean, result: ?}}
+   */
+  doCall (dryRun, tConsole, depResults) {
     if (!this._call) {
-      return false
+      return { callHappened: false, result: '** no call **' }
+    }
+    tConsole.log(`calling function: --> ${this._target}`)
+    if (dryRun) {
+      return { callHappened: true, result: '** dry run **' }
     }
     const deps = this._deps || []
-    const source = deps.length > 0 ? deps[0] : '***no-source***'
-    const sources = deps.join(' ')
-
-    const echo = tConsole.log
-    tConsole.log(`calling function: ${sources} --> ${this._target}`)
-    if (dryRun) {
-      return true
-    }
-    this._call({
-      target: { path: this._target, write: s => fs.writeFileSync(this._target, s) },
-      source: { path: source, read: () => fs.readFileSync(source) },
-      sources: deps.map(p => ({ path: p, read: () => fs.readFileSync(p) })),
-      echo
+    const iterableDepResults = deps.map(dep => depResults[dep])
+    deps.forEach((dep, i) => {
+      if (depResults[dep]) {
+        iterableDepResults[dep] = depResults[dep]
+      }
     })
-    return true
+    return { callHappened: true, result: this._call(iterableDepResults) }
   }
 
-  async doExec (variables, dryRun, tConsole) {
+  /**
+   * @param {!Variables} variables
+   * @param {boolean} dryRun
+   * @param {!Object} tConsole
+   * @param {!Object<string,?>} depResults
+   * @returns {!Promise<number>}
+   */
+  async doExec (variables, dryRun, tConsole, depResults) {
     if (!this._exec.replace) {
       throw new TypeError(`exec of target "${this._target}" should be a string`)
     }
     const deps = this._deps || []
     const source = deps.length > 0 ? deps[0] : '***no-source***'
     const sources = deps.join(' ')
-
-    const substitutedExec = variables.interpolation(
-      this._exec
-        .replace(/\$@/g, this._target)
-        .replace(/\$</g, source)
-        .replace(/\$\+/g, sources)
-    )
+    let exec = this._exec
+      .replace(/\$@/g, this._target)
+      .replace(/\$</g, source)
+      .replace(/\$\+/g, sources)
+    deps.forEach((dep, i) => {
+      const depResult = depResults[dep]
+      if (depResult) {
+        const regexp = new RegExp(`\\$${i}`, 'g')
+        if (exec.match(regexp)) {
+          const tmpPath = writeTmp(depResult)
+          exec = exec.replace(regexp, tmpPath)
+        }
+      }
+    })
+    const substitutedExec = variables.interpolation(exec)
     return printAndExec(substitutedExec, dryRun, tConsole)
   }
 }

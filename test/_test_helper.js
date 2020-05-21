@@ -6,7 +6,7 @@ const os = require('os')
 const path = require('path')
 
 module.exports.buildFileTree = async (spec) => {
-  const folder = await mkdtemp(path.join(os.tmpdir(), 'test-'))
+  const folder = await mkdtemp(path.join('.', 'test-'))
   for (const filename in spec) {
     await writeFile(path.join(folder, filename), spec[filename], 'utf8')
   }

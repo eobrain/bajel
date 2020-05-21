@@ -1,4 +1,5 @@
-module.exports = class {
+
+class Variables {
   /**
    * @param {!Object} bajelfile
    */
@@ -32,3 +33,5 @@ module.exports = class {
     })
   }
 }
+
+module.exports = Variables
