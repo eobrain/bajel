@@ -125,7 +125,14 @@ class Task {
     if (dryRun) {
       return { callHappened: true, result: '** dry run **' }
     }
-    return { callHappened: true, result: this._call(depResults) }
+    const deps = this._deps || []
+    const iterableDepResults = deps.map(dep => depResults[dep])
+    deps.forEach((dep, i) => {
+      if (depResults[dep]) {
+        iterableDepResults[dep] = depResults[dep]
+      }
+    })
+    return { callHappened: true, result: this._call(iterableDepResults) }
   }
 
   /**
@@ -140,9 +147,8 @@ class Task {
       throw new TypeError(`exec of target "${this._target}" should be a string`)
     }
     const deps = this._deps || []
-    const dep = deps
-    const source = dep.length > 0 ? dep[0] : '***no-source***'
-    const sources = dep.join(' ')
+    const source = deps.length > 0 ? deps[0] : '***no-source***'
+    const sources = deps.join(' ')
     let exec = this._exec
       .replace(/\$@/g, this._target)
       .replace(/\$</g, source)
@@ -150,7 +156,7 @@ class Task {
     deps.forEach((dep, i) => {
       const depResult = depResults[dep]
       if (depResult) {
-        const regexp = new RegExp(`\\$${i + 1}`, 'g')
+        const regexp = new RegExp(`\\$${i}`, 'g')
         if (exec.match(regexp)) {
           const tmpPath = writeTmp(depResult)
           exec = exec.replace(regexp, tmpPath)

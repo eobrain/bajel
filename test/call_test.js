@@ -56,7 +56,7 @@ test('call to exec', async t => {
   const [code, stdout, stderr, result] = await build({
     ppp: {
       deps: ['qqq'],
-      exec: 'cat $1'
+      exec: 'cat $0'
     },
     qqq: {
       call: deps => 'QQQ'
@@ -87,7 +87,7 @@ test('spreadsheet', async t => {
     },
     'B%': {
       deps: ['A%'],
-      call: deps => deps[Object.keys(deps)[0]] * 100
+      call: deps => deps[0] * 100
     },
     C1: {
       deps: ['B1', 'B2', 'B3'],

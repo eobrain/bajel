@@ -2,9 +2,10 @@ const test = require('ava')
 const build = require('../src/index.js')
 const fs = require('fs')
 const { buildFileTree } = require('./_test_helper.js')
+// const tee = require('..//src/tee.js')
 
 // all calls concatenate their deps
-const call = deps => Object.keys(deps).map(p => deps[p]).join()
+const call = deps => deps.join()
 
 const cats = folder => ({
   [`${folder}/abcab`]: {

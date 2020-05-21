@@ -11,12 +11,12 @@ test('one-level', async t => {
 
     all: {
       deps: [`${folder}/aaa.branch`],
-      call: deps => '{branch=' + deps[Object.keys(deps)[0]] + '}'
+      call: deps => '{branch=' + deps[0] + '}'
     },
 
     '%.branch': {
       deps: ['%.leaf'],
-      call: deps => '{leaf=' + deps[Object.keys(deps)[0]] + '}'
+      call: deps => '{leaf=' + deps[0] + '}'
     }
 
   })
@@ -34,17 +34,17 @@ test('two-level', async t => {
 
     all: {
       deps: [`${folder}/aaa.trunk`],
-      call: deps => '{trunk=' + deps[Object.keys(deps)[0]] + '}'
+      call: deps => '{trunk=' + deps[0] + '}'
     },
 
     '%.trunk': {
       deps: ['%.branch'],
-      call: deps => '{branch=' + deps[Object.keys(deps)[0]] + '}'
+      call: deps => '{branch=' + deps[0] + '}'
     },
 
     '%.branch': {
       deps: ['%.leaf'],
-      call: deps => '{leaf=' + deps[Object.keys(deps)[0]] + '}'
+      call: deps => '{leaf=' + deps[0] + '}'
     }
 
   })
