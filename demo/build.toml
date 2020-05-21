@@ -1,0 +1,8 @@
+[all]
+deps=["colby", "spreadsheet"]
+
+[colby]
+exec="cd $@; pwd; ../../src/cli.js"
+
+[spreadsheet]
+exec="cd $@; pwd; ../../src/cli.js"

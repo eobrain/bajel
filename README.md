@@ -259,9 +259,13 @@ A build file is an object with the following structure:
 * *target*:
   * deps: *dependencies*
   * exec: *shellCommand*
+  * call: *JavaScript function*
 * *target*:
   * deps: *dependencies*
   * exec: *shellCommand*
+  * call: *JavaScript function*
+
+The "call" property can only appear in the JavaScript syntax.
 
 There can be any number of *variables* and *targets*.
 
@@ -290,6 +294,7 @@ The *shellCommand* may have some special patterns:
 * `$+` is replaced by the all the `deps` fields (after `%` expansion) separated
   by spaces
 * `$(`*variable*`)` is replaced by the corresponding *variableValue*. (And the *variableValue* may contain `$(`*variable*`)` patterns for other variables.)
+* `$i` (where `i` is an integer) is replaced by the return value of the `call` function the `i`th dep.
 
 (If you are familiar with makefiles you will note that the semantics are the
 same, though much simplified.)
