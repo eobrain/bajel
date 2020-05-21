@@ -140,7 +140,7 @@ class Task {
       throw new TypeError(`exec of target "${this._target}" should be a string`)
     }
     const deps = this._deps || []
-    const dep = deps // .map(dep => depResults[dep] || dep)
+    const dep = deps
     const source = dep.length > 0 ? dep[0] : '***no-source***'
     const sources = dep.join(' ')
     let exec = this._exec

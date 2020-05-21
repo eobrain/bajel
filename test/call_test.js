@@ -68,3 +68,43 @@ test('call to exec', async t => {
   t.regex(stdout, /^QQQ$/m)
   t.deepEqual(code, 0)
 })
+
+test('spreadsheet', async t => {
+  const [code, stdout, stderr, result] = await build({
+    result: {
+      deps: ['C1'],
+      call: ({ C1 }) => { console.log('C1=', C1); return C1 }
+    },
+
+    A1: {
+      call: () => 10
+    },
+    A2: {
+      call: () => 12
+    },
+    A3: {
+      call: () => 14
+    },
+    'B%': {
+      deps: ['A%'],
+      call: deps => deps[Object.keys(deps)[0]] * 100
+    },
+    C1: {
+      deps: ['B1', 'B2', 'B3'],
+      call: ({ B1, B2, B3 }) => B1 + B2 + B3
+    }
+  })
+  t.deepEqual(stderr, '')
+  t.deepEqual(stdout,
+`calling function: --> A1
+calling function: --> B1
+calling function: --> A2
+calling function: --> B2
+calling function: --> A3
+calling function: --> B3
+calling function: --> C1
+calling function: --> result
+`)
+  t.deepEqual(code, 0)
+  t.deepEqual(result, 3600)
+})

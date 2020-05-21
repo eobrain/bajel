@@ -15,7 +15,7 @@ export default {
   },
   'B%': {
     deps: ['A%'],
-    call: deps => deps[Object.keys(deps)[0]] * 100
+    call: deps => deps[0] * 100
   },
   C1: {
     deps: ['B1', 'B2', 'B3'],
@@ -23,4 +23,3 @@ export default {
   }
 
 }
-
