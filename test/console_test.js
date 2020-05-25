@@ -308,11 +308,11 @@ test.serial('targets after expansion', async t => {
 })
 
 test('existing file', async t => {
-  const [folder, path] = await writeTmpFile('AAA')
+  const { filePath, cleanup } = await writeTmpFile('AAA')
   try {
     const [code, stdout, stderr] = await build(
       {
-        [path]: {
+        [filePath]: {
           exec: ': for aaa'
         }
       }
@@ -322,12 +322,12 @@ test('existing file', async t => {
     t.regex(out, /bajel: .+ is up to date. .modified [0-9.]+m?s ago./)
     t.deepEqual(0, code)
   } finally {
-    fs.rmdirSync(folder, { recursive: true })
+    cleanup()
   }
 })
 
 test('seconds old existing file', async t => {
-  const folder = await buildFileTree({})
+  const { folder, cleanup } = await buildFileTree({})
   try {
     await build(
       {
@@ -348,12 +348,12 @@ test('seconds old existing file', async t => {
     t.regex(out, /bajel: .+ is up to date. .modified [0-9.]+s ago./)
     t.deepEqual(0, code)
   } finally {
-    fs.rmdirSync(folder, { recursive: true })
+    cleanup()
   }
 })
 
 test('minutes old existing file', async t => {
-  const folder = await buildFileTree({})
+  const { folder, cleanup } = await buildFileTree({})
   try {
     await build(
       {
@@ -374,12 +374,12 @@ test('minutes old existing file', async t => {
     t.regex(out, /bajel: .+ is up to date. .modified [0-9.]+ min ago./)
     t.deepEqual(0, code)
   } finally {
-    fs.rmdirSync(folder, { recursive: true })
+    cleanup()
   }
 })
 
 test('hours old existing file', async t => {
-  const folder = await buildFileTree({})
+  const { folder, cleanup } = await buildFileTree({})
   try {
     await build(
       {
@@ -400,12 +400,12 @@ test('hours old existing file', async t => {
     t.regex(out, /bajel: .+ is up to date. .modified [0-9.]+ hours ago./)
     t.deepEqual(0, code)
   } finally {
-    fs.rmdirSync(folder, { recursive: true })
+    cleanup()
   }
 })
 
 test('very old existing file', async t => {
-  const folder = await buildFileTree({})
+  const { folder, cleanup } = await buildFileTree({})
   try {
     await build(
       {
@@ -426,6 +426,6 @@ test('very old existing file', async t => {
     t.regex(out, /bajel: .+ is up to date. .modified [0-9.]+ days ago./)
     t.deepEqual(0, code)
   } finally {
-    fs.rmdirSync(folder, { recursive: true })
+    cleanup()
   }
 })

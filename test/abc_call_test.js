@@ -1,6 +1,5 @@
 const test = require('ava')
 const build = require('../src/index.js')
-const fs = require('fs')
 const { buildFileTree } = require('./_test_helper.js')
 // const tee = require('..//src/tee.js')
 
@@ -33,7 +32,7 @@ const expected = folder =>
     `calling function: --> ${folder}/abcab\n`
 
 test('abc existing', async t => {
-  const folder = await buildFileTree({
+  const { folder, cleanup } = await buildFileTree({
     a: 'aaa',
     b: 'bbb',
     c: 'ccc'
@@ -49,12 +48,12 @@ test('abc existing', async t => {
     t.deepEqual(result, 'aaa,bbb,ccc,aaa,bbb')
     t.deepEqual(0, code)
   } finally {
-    fs.rmdirSync(folder, { recursive: true })
+    cleanup()
   }
 })
 
 test('abc generated', async t => {
-  const folder = await buildFileTree({})
+  const { folder, cleanup } = await buildFileTree({})
   try {
     const [code, stdout, stderr, result] = await build(
       {
@@ -72,6 +71,6 @@ test('abc generated', async t => {
     t.deepEqual(result, 'Aaa,Bbb,Ccc,Aaa,Bbb')
     t.deepEqual(0, code)
   } finally {
-    fs.rmdirSync(folder, { recursive: true })
+    cleanup()
   }
 })

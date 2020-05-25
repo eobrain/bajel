@@ -1,7 +1,7 @@
 const test = require('ava')
-const fs = require('fs')
 const markdown = require('../src/markdown.js')
 const { writeTmpFile } = require('./_test_helper.js')
+// const tee = require('../src/tee')
 
 test('colby', async t => {
   const bajelfile = await markdown('demo/colby/md/build.md')
@@ -24,7 +24,7 @@ test('colby', async t => {
 })
 
 test('markdown', async t => {
-  const [folder, path] = await writeTmpFile(`
+  const { filePath, cleanup } = await writeTmpFile(`
 # Foo
 ## a_target 
 Deps: \`a_dep\` \`another_dep\`
@@ -41,7 +41,7 @@ exec
 `
   )
   try {
-    const bajelfile = await markdown(path)
+    const bajelfile = await markdown(filePath)
 
     const expected = {
       a_target: {
@@ -54,30 +54,30 @@ exec
     }
     t.deepEqual(bajelfile, expected)
   } finally {
-    fs.rmdirSync(folder, { recursive: true })
+    cleanup()
   }
 })
 
 test('deps without target', async t => {
-  const [folder, path] = await writeTmpFile(`
+  const { filePath, cleanup } = await writeTmpFile(`
 # Foo
 Deps: \`a_dep\`
 `
   )
   try {
     await t.throwsAsync(async () => {
-      await markdown(path)
+      await markdown(filePath)
     }, {
       instanceOf: Error,
       message: /file:3: Deps without a target:\nDeps: `a_dep`/m
     })
   } finally {
-    fs.rmdirSync(folder, { recursive: true })
+    cleanup()
   }
 })
 
 test('exec without target', async t => {
-  const [folder, path] = await writeTmpFile(`
+  const { filePath, cleanup } = await writeTmpFile(`
 # Foo
 \`\`\`sh
 an_exec
@@ -86,12 +86,12 @@ an_exec
   )
   try {
     await t.throwsAsync(async () => {
-      await markdown(path)
+      await markdown(filePath)
     }, {
       instanceOf: Error,
       message: /file:3: Exec without a target:\n```sh/m
     })
   } finally {
-    fs.rmdirSync(folder, { recursive: true })
+    cleanup()
   }
 })

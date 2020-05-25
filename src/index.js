@@ -6,6 +6,7 @@ const { timestamp } = require('./fs_util.js')
 const Variables = require('./variables.js')
 const Tasks = require('./tasks.js')
 const ago = require('./ago.js')
+// const tee = require('./tee.js')
 
 // const trace = x => console.log('trace:', x) || x
 
@@ -54,12 +55,24 @@ module.exports = async (bajelfile) => {
   }
 
   const dryRun = options.n
+
+  try {
+    // Phase 1: Expand variables
+    tasks.expandVariables(variables)
+  } catch (e) {
+    tConsole.error('Problem expanding variables: ' + e)
+    if (options.p) {
+      tConsole.log(bajelfile)
+    }
+    return [1, tStdout(), tStderr()]
+  }
+
   const start = options._.length > 0
     ? options._[0]
     : tasks.explicitTargets()[0]
 
   try {
-    // Phase 1: Expansion
+    // Phase 2: Expand percents
     while (tasks.expandDeps(tConsole)) { }
   } catch (e) {
     tConsole.error('Problem expanding percents: ' + e)
@@ -78,8 +91,8 @@ module.exports = async (bajelfile) => {
   }
 
   try {
-    // Phase 2: Executions
-    const { code, updatedTime, recipeHappened, result } = await tasks.recurse([], start, variables, dryRun, options.debug)
+    // Phase 3: Executions
+    const { code, updatedTime, recipeHappened, result } = await tasks.recurse([], start, dryRun, options.debug)
 
     if (code !== 0) {
       tConsole.error(`bajel: recipe for target '${start}' failed\nbajel: *** [error] Error ${code}`)

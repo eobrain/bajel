@@ -22,6 +22,25 @@ const cats = folder => ({
     exec
   }
 })
+const catsVar = folder => ({
+  FOLDER: `${folder}`,
+  '$(FOLDER)/abcab': {
+    deps: ['$(FOLDER)/abca', '$(FOLDER)/b'],
+    exec
+  },
+  '$(FOLDER)/ab': {
+    deps: ['$(FOLDER)/a', '$(FOLDER)/b'],
+    exec
+  },
+  '$(FOLDER)/abc': {
+    deps: ['$(FOLDER)/ab', '$(FOLDER)/c'],
+    exec
+  },
+  '$(FOLDER)/abca': {
+    deps: ['$(FOLDER)/abc', '$(FOLDER)/a'],
+    exec
+  }
+})
 
 const expected = folder =>
   `cat ${folder}/a ${folder}/b > ${folder}/ab\n` +
@@ -30,7 +49,7 @@ const expected = folder =>
     `cat ${folder}/abca ${folder}/b > ${folder}/abcab\n`
 
 test('abc existing', async t => {
-  const folder = await buildFileTree({
+  const { folder, cleanup } = await buildFileTree({
     a: 'aaa',
     b: 'bbb',
     c: 'ccc'
@@ -47,12 +66,34 @@ test('abc existing', async t => {
     t.deepEqual(abcab, 'aaabbbcccaaabbb')
     t.deepEqual(0, code)
   } finally {
-    fs.rmdirSync(folder, { recursive: true })
+    cleanup()
+  }
+})
+
+test('abc existing var', async t => {
+  const { folder, cleanup } = await buildFileTree({
+    a: 'aaa',
+    b: 'bbb',
+    c: 'ccc'
+  })
+  try {
+    const [code, stdout, stderr] = await build(
+      catsVar(folder)
+    )
+
+    t.deepEqual(stdout + stderr.toString(),
+      expected(folder)
+    )
+    const abcab = await fs.readFileSync(`${folder}/abcab`, 'utf8')
+    t.deepEqual(abcab, 'aaabbbcccaaabbb')
+    t.deepEqual(0, code)
+  } finally {
+    cleanup()
   }
 })
 
 test('abc generated', async t => {
-  const folder = await buildFileTree({})
+  const { folder, cleanup } = await buildFileTree({})
   try {
     const [code, stdout, stderr] = await build(
       {
@@ -71,6 +112,33 @@ test('abc generated', async t => {
     t.deepEqual(abcab, 'Aaa\nBbb\nCcc\nAaa\nBbb\n')
     t.deepEqual(0, code)
   } finally {
-    fs.rmdirSync(folder, { recursive: true })
+    cleanup()
+  }
+})
+
+test('abc generated var', async t => {
+  const { folder, cleanup } = await buildFileTree({})
+  try {
+    const [code, stdout, stderr] = await build(
+      {
+        MAKE_AAA: 'echo "Aaa" > $@',
+        MAKE_BBB: 'echo "Bbb" > $@',
+        MAKE_CCC: 'echo "Ccc" > $@',
+        ...cats(folder),
+        [`${folder}/a`]: { exec: '$(MAKE_AAA)' },
+        [`${folder}/b`]: { exec: '$(MAKE_BBB)' },
+        [`${folder}/c`]: { exec: '$(MAKE_CCC)' }
+      }
+    )
+
+    const out = stdout + stderr
+    t.regex(out, /^echo "Aaa" > .*\/a$/m)
+    t.regex(out, /^echo "Bbb" > .*\/b$/m)
+    t.regex(out, /^echo "Ccc" > .*\/c$/m)
+    const abcab = await fs.readFileSync(`${folder}/abcab`, 'utf8')
+    t.deepEqual(abcab, 'Aaa\nBbb\nCcc\nAaa\nBbb\n')
+    t.deepEqual(0, code)
+  } finally {
+    cleanup()
   }
 })
