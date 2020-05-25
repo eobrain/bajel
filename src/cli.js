@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 
-const fs = require('fs')
+const externalRequire = require
+const fs = externalRequire('fs')
 const build = require('./index.js')
 const markdown = require('./markdown.js')
-const yaml = require('js-yaml')
-const toml = require('toml')
-const semver = require('semver')
+const yaml = externalRequire('js-yaml')
+const toml = externalRequire('toml')
+const semver = externalRequire('semver')
 
 const main = async () => {
   const prefix = process.cwd() + '/build.'

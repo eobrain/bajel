@@ -30,7 +30,7 @@ const expected = folder =>
     `cat ${folder}/abca ${folder}/b > ${folder}/abcab\n`
 
 test('abc existing', async t => {
-  const folder = await buildFileTree({
+  const { folder, cleanup } = await buildFileTree({
     a: 'aaa',
     b: 'bbb',
     c: 'ccc'
@@ -47,12 +47,12 @@ test('abc existing', async t => {
     t.deepEqual(abcab, 'aaabbbcccaaabbb')
     t.deepEqual(0, code)
   } finally {
-    fs.rmdirSync(folder, { recursive: true })
+    cleanup()
   }
 })
 
 test('abc generated', async t => {
-  const folder = await buildFileTree({})
+  const { folder, cleanup } = await buildFileTree({})
   try {
     const [code, stdout, stderr] = await build(
       {
@@ -71,6 +71,6 @@ test('abc generated', async t => {
     t.deepEqual(abcab, 'Aaa\nBbb\nCcc\nAaa\nBbb\n')
     t.deepEqual(0, code)
   } finally {
-    fs.rmdirSync(folder, { recursive: true })
+    cleanup()
   }
 })
