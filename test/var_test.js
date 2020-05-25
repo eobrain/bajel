@@ -57,6 +57,6 @@ test('recursive', async t => {
   })
 
   t.deepEqual(stdout, '')
-  t.deepEqual(stderr, 'Error: Recursive definition of aaa.\n')
+  t.deepEqual(stderr, 'Problem expanding variables: Error: Recursive definition of aaa.\n')
   t.deepEqual(code, 1)
 })

@@ -64,3 +64,33 @@ test('two-level', async t => {
     cleanup()
   }
 })
+
+test('variable with percent', async t => {
+  const { folder, cleanup } = await buildFileTree({
+    'aaa.leaf': 'LEAF CONTENT'
+  })
+  try {
+    const [code, stdout, stderr, result] = await build({
+
+      BRANCH: '%.branch',
+
+      all: {
+        deps: [`${folder}/aaa.branch`]
+      },
+
+      '$(BRANCH)': {
+        deps: ['%.leaf'],
+        exec: 'cat $< >$@'
+      }
+
+    })
+    const out = stdout + stderr
+    t.regex(out, /^cat test-.*\.leaf >test-.*\.branch$/m)
+    const branch = await fs.readFileSync(`${folder}/aaa.branch`, 'utf8')
+    t.deepEqual(branch, 'LEAF CONTENT')
+    t.deepEqual(result, 'Error: ENOENT: no such file or directory, open \'all\'')
+    t.deepEqual(0, code)
+  } finally {
+    cleanup()
+  }
+})

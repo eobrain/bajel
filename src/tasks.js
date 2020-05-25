@@ -6,6 +6,9 @@ const externalRequire = require
 const fs = externalRequire('fs')
 // const tee = require('./tee.js')
 
+// jsdoc type-checking only
+const Variables = require('./variables.js') // eslint-disable-line no-unused-vars
+
 const fileContent = path => {
   try {
     return fs.readFileSync(path, 'utf8')
@@ -96,6 +99,22 @@ module.exports = class {
     }
   }
 
+  /**
+   * @param {!Variables} variables
+   */
+  expandVariables (variables) {
+    const taskNames = Object.keys(this._tasks)
+    for (const taskName of taskNames) {
+      const task = this._tasks[taskName]
+      task.expandVariables(variables)
+      if (task.target() !== taskName) {
+        delete this._tasks[taskName]
+        this._tasks[task.target()] = task
+      }
+    }
+    this._explicitTargets = Object.keys(this._tasks).filter(k => !k.includes('%'))
+  }
+
   /** @param {!Object} tConsole use like built-in console */
   expandDeps (tConsole) {
     const files = []
@@ -135,10 +154,13 @@ module.exports = class {
   }
 
   /**
+   * @param {Array<string>} prevTargets
    * @param {string} target being built
+   * @param {boolean} dryRun
+   * @param {boolean} debug
    * @returns {!Promise<{ code: number, updatedTime: number, recipeHappened:boolean, result:? }>} whether succeeded and timestamp in ms of latest file change
    */
-  async recurse (prevTargets, target, variables, dryRun, debug) {
+  async recurse (prevTargets, target, dryRun, debug) {
     const debugOut = f => {
       if (debug) {
         this._tConsole.log(`target "${target}" ${f()}`)
@@ -169,7 +191,7 @@ module.exports = class {
         updatedTime: depTime,
         recipeHappened: depRecipeHappened,
         result: depResult
-      } = await this.recurse(prevTargets, dep, variables, dryRun, debug)
+      } = await this.recurse(prevTargets, dep, dryRun, debug)
       recipeHappened = recipeHappened || depRecipeHappened
       if (depCode !== 0) {
         const result = `-- execution of dep target "${dep}" failed. Stopping.`
@@ -195,7 +217,7 @@ module.exports = class {
       if (callHappened) {
         outResult = result
       } else {
-        const code = await task.doExec(variables, dryRun, this._tConsole, depResults)
+        const code = await task.doExec(dryRun, this._tConsole, depResults)
         recipeHappened = true
         if (code !== 0) {
           this._tConsole.error('FAILED call', task.toString())

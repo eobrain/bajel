@@ -19,6 +19,19 @@ class Task {
     this._call = call
   }
 
+  /**
+   * @param {!Variables} variables
+   */
+  expandVariables (variables) {
+    this._target = variables.interpolation(this._target)
+    if (this._deps && this._deps.map) {
+      this._deps = this._deps.map(dep => variables.interpolation(dep))
+    }
+    if (this._exec && this._exec.replace) {
+      this._exec = variables.interpolation(this._exec)
+    }
+  }
+
   /** @returns {string} */
   toString () {
     const propertyStrings = []
@@ -136,13 +149,12 @@ class Task {
   }
 
   /**
-   * @param {!Variables} variables
    * @param {boolean} dryRun
    * @param {!Object} tConsole
    * @param {!Object<string,?>} depResults
    * @returns {!Promise<number>}
    */
-  async doExec (variables, dryRun, tConsole, depResults) {
+  async doExec (dryRun, tConsole, depResults) {
     if (!this._exec.replace) {
       throw new TypeError(`exec of target "${this._target}" should be a string`)
     }
@@ -163,8 +175,7 @@ class Task {
         }
       }
     })
-    const substitutedExec = variables.interpolation(exec)
-    return printAndExec(substitutedExec, dryRun, tConsole)
+    return printAndExec(exec, dryRun, tConsole)
   }
 }
 
