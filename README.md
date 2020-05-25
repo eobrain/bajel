@@ -23,7 +23,7 @@ You can write the build file in your favorite format:
 * JavaScript if you want more control
 * Markdown if you like literate programming
 
-See the article [Bajel, A Simple, Flexible Build and Scripting Tool for NPM][8] the motivation for creating Bajel.
+The article [Bajel, A Simple, Flexible Build and Scripting Tool for NPM][8] describes the motivation for creating Bajel.
 
 ## Installation
 
