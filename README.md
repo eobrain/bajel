@@ -23,7 +23,7 @@ You can write the build file in your favorite format:
 * JavaScript if you want more control
 * Markdown if you like literate programming
 
-See the article [Bajel, A Simple, Flexible Build and Scripting Tool for NPM][4] the motivation for creating Bajel.
+See the article [Bajel, A Simple, Flexible Build and Scripting Tool for NPM][8] the motivation for creating Bajel.
 
 ## Installation
 
@@ -240,16 +240,11 @@ rm -f hellomake hellomake.o hellofunc.o
 * Maxichrome's [build.toml][6] is another straightforward TOML build file.
 * The [build.cjs][4] for a blog uses JavaScript variables, but it is otherwise
   fairly simple.
-* Mergi's [build.mjs][3] is a fairly complex build file which uses the power of
+* Mergi's [build.mjs][7] is a fairly complex build file which uses the power of
   JavaScript to remove duplication by refactoring out common elements. For
   example it extensively uses the `...` spread operator to insert sub arrays
   into the `deps` arrays and to insert new dynamically generated targets into
   the main dictionary.
-
-[3]: https://github.com/eobrain/mergi/blob/master/build.mjs
-[4]: https://github.com/eobrain/webhome/blob/master/build.cjs
-[5]: https://github.com/eobrain/diagmap/blob/master/build.toml
-[6]: https://github.com/eobrain/maxichrome/blob/master/build.toml
 
 ### Advanced feature: JavaScript functions as actions
 
@@ -355,4 +350,8 @@ http://www.eclipse.org/legal/epl-v10.html
 [1]: bajel.jpg
 [2]: http://www.cs.colby.edu/maxwell/courses/tutorials/maketutor/
 [3]: https://github.com/egoist/maid
-[4]: https://eamonn.org/programming/2020/05/22/bajel.html
+[4]: https://github.com/eobrain/webhome/blob/master/build.cjs
+[5]: https://github.com/eobrain/diagmap/blob/master/build.toml
+[6]: https://github.com/eobrain/maxichrome/blob/master/build.toml
+[7]: https://github.com/eobrain/mergi/blob/master/build.mjs
+[8]: https://eamonn.org/programming/2020/05/22/bajel.html
