@@ -23,6 +23,8 @@ You can write the build file in your favorite format:
 * JavaScript if you want more control
 * Markdown if you like literate programming
 
+See the article [Bajel, A Simple, Flexible Build and Scripting Tool for NPM][4] the motivation for creating Bajel.
+
 ## Installation
 
 ```sh
@@ -353,3 +355,4 @@ http://www.eclipse.org/legal/epl-v10.html
 [1]: bajel.jpg
 [2]: http://www.cs.colby.edu/maxwell/courses/tutorials/maketutor/
 [3]: https://github.com/egoist/maid
+[4]: https://eamonn.org/programming/2020/05/22/bajel.html
