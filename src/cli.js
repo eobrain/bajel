@@ -7,6 +7,7 @@ const markdown = require('./markdown.js')
 const yaml = externalRequire('js-yaml')
 const toml = externalRequire('toml')
 const semver = externalRequire('semver')
+// const { pp } = require('passprint')
 
 const main = async () => {
   const prefix = process.cwd() + '/build.'

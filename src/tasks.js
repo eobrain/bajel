@@ -4,7 +4,7 @@ const { timestamp, walkDir } = require('./fs_util.js')
 const ago = require('./ago.js')
 const externalRequire = require
 const fs = externalRequire('fs')
-// const tee = require('./tee.js')
+// const { pp } = require('passprint')
 
 // jsdoc type-checking only
 const Variables = require('./variables.js') // eslint-disable-line no-unused-vars

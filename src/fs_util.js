@@ -2,7 +2,7 @@ const externalRequire = require
 const fs = externalRequire('fs')
 const path = externalRequire('path')
 const tmp = externalRequire('tmp')
-// const tee = require('./tee.js')
+// const {pp} = require('../../passprint')
 
 /** @returns timestamp if it is a file, or zero if it does not exist or is a directory. */
 const timestamp = path =>
