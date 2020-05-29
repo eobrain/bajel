@@ -13,7 +13,6 @@ const TeeStreamToString = wrapped => {
   stream._write = (chunk, enc, next) => {
     wrapped._write(chunk, enc, next)
     string += chunk.toString()
-    next()
   }
   const toString = () => string
   return { stream, toString }
