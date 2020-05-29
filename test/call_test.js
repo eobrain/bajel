@@ -1,7 +1,7 @@
 const test = require('ava')
 const build = require('../src/index.js')
 const fs = require('fs')
-// const tee = require('../src/tee.js')
+// const { pp } = require('passprint')
 
 test.beforeEach(t => {
   if (fs.existsSync('/tmp/ccc')) {

@@ -1,7 +1,7 @@
 const test = require('ava')
 const build = require('../src/index.js')
 const { buildFileTree } = require('./_test_helper.js')
-// const tee = require('..//src/tee.js')
+// const { pp } = require('passprint')
 
 // all calls concatenate their deps
 const call = deps => deps.join()

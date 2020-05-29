@@ -4,7 +4,7 @@ const mkdtemp = promisify(fs.mkdtemp)
 const writeFile = promisify(fs.writeFile)
 const os = require('os')
 const path = require('path')
-// const tee = require('../src/tee')
+// const { pp } = require('passprint')
 
 module.exports.buildFileTree = async (spec) => {
   const folder = await mkdtemp(path.join('.', 'test-'))

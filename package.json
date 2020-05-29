@@ -26,6 +26,7 @@
     "getopts": "^2.2.5",
     "install": "^0.13.0",
     "js-yaml": "^3.13.1",
+    "passprint": "0.0.1",
     "remove": "^0.1.5",
     "semver": "^7.2.1",
     "tmp": "^0.2.1",

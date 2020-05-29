@@ -1,7 +1,7 @@
 const test = require('ava')
 const markdown = require('../src/markdown.js')
 const { writeTmpFile } = require('./_test_helper.js')
-// const tee = require('../src/tee')
+// const { pp } = require('passprint')
 
 test('colby', async t => {
   const bajelfile = await markdown('demo/colby/md/build.md')

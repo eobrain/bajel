@@ -1,7 +1,7 @@
 const Percent = require('./percent.js')
 const printAndExec = require('./exec.js')
 const { writeTmp } = require('./fs_util.js')
-// const tee = require('./tee.js')
+// const { pp } = require('passprint')
 
 // jsdoc type-checking only
 const Variables = require('./variables.js') // eslint-disable-line no-unused-vars
