@@ -2,6 +2,7 @@ const test = require('ava')
 const build = require('../src/index.js')
 const fs = require('fs')
 const { buildFileTree, writeTmpFile } = require('./_test_helper.js')
+// const { pp } = require('passprint')
 
 test('happy path', async t => {
   const [code, stdout, stderr] = await build(
@@ -43,15 +44,7 @@ test.serial('help text', async t => {
       }
     )
 
-    t.deepEqual(stdout, `
-       usage: bajel[-n][-p][-h][target]
-       -n  dry run
-       -p  print out the expanded build file
-       -d  debug
-       -t  print out all explicit targets before % expansion
-       -T  print out all targets after % expansion
-       -h  this help
-       \n`)
+    t.snapshot(stdout)
     t.deepEqual(stderr, '')
     t.deepEqual(code, 0)
   } finally {

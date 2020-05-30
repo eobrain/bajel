@@ -1,5 +1,6 @@
 const test = require('ava')
 const build = require('../src/index.js')
+require('./_test_helper.js')
 
 const exec = `
   cd $@

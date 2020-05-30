@@ -1,6 +1,7 @@
 const test = require('ava')
 const build = require('../src/index.js')
 const fs = require('fs')
+require('./_test_helper.js')
 // const { pp } = require('passprint')
 
 test.beforeEach(t => {

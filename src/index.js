@@ -6,7 +6,7 @@ const { timestamp } = require('./fs_util.js')
 const Variables = require('./variables.js')
 const Tasks = require('./tasks.js')
 const ago = require('./ago.js')
-// const {pp} = require('../../passprint')
+// const { pp } = require('passprint')
 
 // const trace = x => console.log('trace:', x) || x
 
@@ -14,27 +14,31 @@ const ago = require('./ago.js')
  * @returns [errorCode, stdoutString, stderrString]
  */
 module.exports = async (bajelfile) => {
-  const { tConsole, tStdout, tStderr } = StrConsole()
   const options = getopts(process.argv.slice(2), {
-    boolean: ['n', 'p', 'd', 'h'],
+    boolean: ['d', 'h', 'n', 'p', 's', 't', 'T'],
     alias: {
-      n: ['just-print', 'dry-run', 'recon'],
+      d: ['debug'],
       h: ['help'],
+      n: ['dry-run'],
+      p: ['print'],
+      s: ['silent'],
       t: ['targets'],
       T: ['targets-expanded'],
-      d: ['debug'],
       stopEarly: true
     }
   })
+  const { tConsole, tStdout, tStderr } = StrConsole(!options.silent)
   if (options.help) {
     tConsole.log(`
-       usage: bajel[-n][-p][-h][target]
-       -n  dry run
-       -p  print out the expanded build file
-       -d  debug
-       -t  print out all explicit targets before % expansion
-       -T  print out all targets after % expansion
-       -h  this help
+      Usage: bajel [options] [target]
+      Options:
+       -d, --debug            Explain how decisions are made.
+       -h  --help             Show this help.
+       -n, --dry-run          Don't execute the recipes.
+       -s, --silent           Don't echo anything to stdout or stderr.
+       -p  --print            Print the expanded build file
+       -T  --targets-expanded Print out all targets after % expansion.
+       -t, --targets          Print out all explicit targets before % expansion
        `)
     return [0, tStdout(), tStderr()]
   }
@@ -92,7 +96,12 @@ module.exports = async (bajelfile) => {
 
   try {
     // Phase 3: Executions
-    const { code, updatedTime, recipeHappened, result } = await tasks.recurse([], start, dryRun, options.debug)
+    const {
+      code,
+      updatedTime,
+      recipeHappened,
+      result
+    } = await tasks.recurse([], start, dryRun, options.debug)
 
     if (code !== 0) {
       tConsole.error(`bajel: recipe for target '${start}' failed\nbajel: *** [error] Error ${code}`)
@@ -110,7 +119,7 @@ module.exports = async (bajelfile) => {
     }
     return [0, tStdout(), tStderr(), result]
   } catch (e) {
-    console.error(e)
+    // console.error(e)
     tConsole.error(e.toString())
     return [1, tStdout(), tStderr(), e.toString()]
   }

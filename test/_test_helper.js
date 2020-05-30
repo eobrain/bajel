@@ -6,6 +6,8 @@ const os = require('os')
 const path = require('path')
 // const { pp } = require('passprint')
 
+process.argv.push('-s')
+
 module.exports.buildFileTree = async (spec) => {
   const folder = await mkdtemp(path.join('.', 'test-'))
   for (const filename in spec) {
