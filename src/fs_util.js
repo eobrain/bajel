@@ -2,7 +2,7 @@ const externalRequire = require
 const fs = externalRequire('fs')
 const path = externalRequire('path')
 const tmp = externalRequire('tmp')
-// const {pp} = require('../../passprint')
+// const { pp } = require('../../passprint')
 
 /** @returns timestamp if it is a file, or zero if it does not exist or is a directory. */
 const timestamp = path =>
@@ -19,13 +19,17 @@ const walkDir = (dir, callback) => {
       return
     }
     const dirPath = path.join(dir, f)
-    if (fs.statSync(dirPath).isDirectory()) {
-      walkDir(dirPath, callback)
-    } else {
-      const childPath = path.join(dir, f)
-      if (!fs.statSync(childPath).isDirectory()) {
-        callback(childPath)
+    try {
+      if (fs.statSync(dirPath).isDirectory()) {
+        walkDir(dirPath, callback)
+      } else {
+        const childPath = path.join(dir, f)
+        if (!fs.statSync(childPath).isDirectory()) {
+          callback(childPath)
+        }
       }
+    } catch (e) {
+      // Expected occasional race condition: f was deleted after readdir call
     }
   })
 }
