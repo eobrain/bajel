@@ -62,7 +62,7 @@ test('abc existing', async t => {
     t.deepEqual(stdout + stderr.toString(),
       expected(folder)
     )
-    const abcab = await fs.readFileSync(`${folder}/abcab`, 'utf8')
+    const abcab = fs.readFileSync(`${folder}/abcab`, 'utf8')
     t.deepEqual(abcab, 'aaabbbcccaaabbb')
     t.deepEqual(0, code)
   } finally {
@@ -84,7 +84,7 @@ test('abc existing var', async t => {
     t.deepEqual(stdout + stderr.toString(),
       expected(folder)
     )
-    const abcab = await fs.readFileSync(`${folder}/abcab`, 'utf8')
+    const abcab = fs.readFileSync(`${folder}/abcab`, 'utf8')
     t.deepEqual(abcab, 'aaabbbcccaaabbb')
     t.deepEqual(0, code)
   } finally {
@@ -108,7 +108,7 @@ test('abc generated', async t => {
     t.regex(out, /^echo "Aaa" > .*\/a$/m)
     t.regex(out, /^echo "Bbb" > .*\/b$/m)
     t.regex(out, /^echo "Ccc" > .*\/c$/m)
-    const abcab = await fs.readFileSync(`${folder}/abcab`, 'utf8')
+    const abcab = fs.readFileSync(`${folder}/abcab`, 'utf8')
     t.deepEqual(abcab, 'Aaa\nBbb\nCcc\nAaa\nBbb\n')
     t.deepEqual(0, code)
   } finally {
@@ -135,7 +135,7 @@ test('abc generated var', async t => {
     t.regex(out, /^echo "Aaa" > .*\/a$/m)
     t.regex(out, /^echo "Bbb" > .*\/b$/m)
     t.regex(out, /^echo "Ccc" > .*\/c$/m)
-    const abcab = await fs.readFileSync(`${folder}/abcab`, 'utf8')
+    const abcab = fs.readFileSync(`${folder}/abcab`, 'utf8')
     t.deepEqual(abcab, 'Aaa\nBbb\nCcc\nAaa\nBbb\n')
     t.deepEqual(0, code)
   } finally {

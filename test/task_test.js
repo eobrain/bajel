@@ -1,6 +1,12 @@
 const test = require('ava')
 const Task = require('../src/task.js')
 
+const fakeConsole = {
+  log: () => {},
+  warn: (...args) => { throw new Error(`Unexpected warn(${args.join})`) },
+  error: (...args) => { throw new Error(`Unexpected error(${args.join})`) }
+}
+
 test('toString', t => {
   const task = new Task('aTarget', {
     deps: ['aDep', 'anotherDep'],
@@ -17,7 +23,7 @@ test('call', t => {
     deps: [],
     call: () => 'aResult'
   })
-  const { callHappened, result } = task.doCall(false, console, [])
+  const { callHappened, result } = task.doCall(false, fakeConsole, [])
   t.deepEqual(result, 'aResult')
   t.truthy(callHappened)
 })
