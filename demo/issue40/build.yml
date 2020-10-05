@@ -1,0 +1,5 @@
+SOURCE: ["**/index.md"]
+
+output.html:
+  deps: $(SOURCE)
+  exec: cat $(SOURCE) > output.html

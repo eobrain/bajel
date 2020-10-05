@@ -88,8 +88,7 @@ test.serial('bad deps', async t => {
     code: 1,
     stdout: '',
     stderr:
-    'Problem expanding percents: Error: Deps should be an array in\n' +
-          'foo:{deps:"string dep"}\n'
+    'Problem expanding variables: Error: "string dep" should be an array or a variable reference\n'
   })
 })
 

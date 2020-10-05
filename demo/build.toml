@@ -1,8 +1,11 @@
 [all]
-deps=["colby", "spreadsheet"]
+deps=["colby", "spreadsheet", "issue40"]
 
 [colby]
 exec="cd $@; pwd; ../../src/cli.js"
 
 [spreadsheet]
+exec="cd $@; pwd; ../../src/cli.js"
+
+[issue40]
 exec="cd $@; pwd; ../../src/cli.js"

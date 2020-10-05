@@ -24,8 +24,14 @@ class Task {
    */
   expandVariables (variables) {
     this._target = variables.interpolation(this._target)
-    if (this._deps && this._deps.map) {
-      this._deps = this._deps.map(dep => variables.interpolation(dep))
+    if (this._deps) {
+      if (this._deps.map) {
+        // deps is array
+        this._deps = this._deps.map(dep => variables.interpolation(dep))
+      } else {
+        // deps is variable
+        this._deps = variables.interpolationAsArray(this._deps)
+      }
     }
     if (this._exec && this._exec.replace) {
       this._exec = variables.interpolation(this._exec)
@@ -76,9 +82,9 @@ class Task {
     if (this._deps === null || this._deps === undefined) {
       return undefined
     }
-    if (!this._deps.filter) {
-      throw new Error('Deps should be an array in\n' + this.toString())
-    }
+    // if (!this._deps.filter) {
+    //  throw new Error('Deps should be an array in\n' + this.toString())
+    // }
     for (let i = 0; i < this._deps.length; ++i) {
       const fromPattern = new Percent(this._deps[i])
       if (fromPattern.hasMatch()) {
