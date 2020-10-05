@@ -9,11 +9,12 @@ const exec = `
 
 module.exports = {
 
-  all: { deps: ['toml', 'json', 'yaml', 'cjs', 'mjs', 'md'] },
+  all: { deps: ['toml', 'json', 'yaml', 'yml', 'cjs', 'mjs', 'md'] },
 
   toml: { exec },
   json: { exec },
   yaml: { exec },
+  yml: { exec },
   cjs: { exec },
   mjs: { exec },
   md: { exec }
