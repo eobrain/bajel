@@ -55,6 +55,14 @@ test.serial('yaml', async t => {
   t.deepEqual(0, code)
 })
 
+test.serial('yml', async t => {
+  const [code, stdout, stderr] = await build({
+    'demo/colby/yml': { exec }
+  })
+  t.deepEqual(outFilter(stdout + stderr), expected)
+  t.deepEqual(0, code)
+})
+
 test.serial('cjs', async t => {
   const [code, stdout, stderr] = await build({
     'demo/colby/cjs': { exec }

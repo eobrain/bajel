@@ -54,7 +54,7 @@ test('read', async t => {
 })
 
 test('call to exec', async t => {
-  const [code, stdout, stderr, result] = await build({
+  const [code, stdout, stderr] = await build({
     ppp: {
       deps: ['qqq'],
       exec: 'cat $0'

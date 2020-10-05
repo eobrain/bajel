@@ -53,7 +53,10 @@ const main = async () => {
         throw e
       }
     }
-    const [yamlText, yamlPath] = readIfExists('yaml')
+    let [yamlText, yamlPath] = readIfExists('yaml')
+    if (!yamlText) {
+      [yamlText, yamlPath] = readIfExists('yml')
+    }
     if (yamlText) {
       try {
         return yaml.safeLoad(yamlText)

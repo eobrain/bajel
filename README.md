@@ -60,7 +60,7 @@ actually executing them.
 The build file must be one of the following names:
 
 * `build.toml`
-* `build.yaml`
+* `build.yaml` or `build.yml`
 * `build.json`
 * `build.cjs` (JavaScript, as a classic Node-JS module)
 * `build.mjs` (JavaScript, as a new-style ES6 module -- Node version 13.2.0 or later)
