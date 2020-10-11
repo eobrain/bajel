@@ -303,7 +303,7 @@ The "call" property can only appear in the JavaScript syntax.
 
 There can be any number of *variables* and *targets*.
 
-A *variableValue* is either a string or an arrays
+A *variableValue* is either a string or an array.
 
 A *target* can be
 
@@ -311,7 +311,7 @@ A *target* can be
 2. or a file pattern with a `%` representing a wildcard.
 3. otherwise just a label
 
-The *dependencies* is an array of strings, each of which can be either:
+The *dependencies* is an array of strings (or string that is a variable reference to an array variable), where each element of the array can be either:
 
 1. Another target in the build file
 2. An existing file or file pattern

@@ -32,6 +32,24 @@ class Variables {
       return this.interpolation(asString, { [variableName]: true, ...prev })
     })
   }
+
+  /**
+   * @param {string} string
+   * @param {!Object} prev={}
+   * @return {array}
+   */
+  interpolationAsArray (string, prev = {}) {
+    string = string.trim()
+    if (!string.match(/^\$\((\w+)\)$/)) {
+      throw new Error(`"${string}" should be an array or a variable reference`)
+    }
+    const variableName = string.slice(2, -1)
+    const value = this._dict[variableName]
+    if (value === undefined) {
+      throw new Error(`Variable ${variableName} is not defined. Current variables are ${JSON.stringify(this._dict, undefined, 2)}.`)
+    }
+    return value
+  }
 }
 
 module.exports = Variables

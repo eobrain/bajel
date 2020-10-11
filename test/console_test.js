@@ -241,8 +241,7 @@ test.serial('bad deps with print', async t => {
     )
 
     t.deepEqual(stderr,
-      'Problem expanding percents: Error: Deps should be an array in\n' +
-            'foo:{deps:"string dep"}\n')
+      'Problem expanding variables: Error: "string dep" should be an array or a variable reference\n')
     t.deepEqual(stdout,
       '{ foo: { deps: \'string dep\' } }\n')
     t.deepEqual(code, 1)

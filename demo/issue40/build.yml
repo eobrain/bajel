@@ -1,0 +1,10 @@
+SOURCE: ["foo/index.md", "foo/bar/index.md"]
+
+all:
+  deps:
+  - output1.html
+  - output2.html
+
+output.html:
+  deps: $(SOURCE)
+  exec: cat $(SOURCE) > $@
