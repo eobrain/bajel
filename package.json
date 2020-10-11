@@ -24,7 +24,6 @@
   "homepage": "https://github.com/eobrain/bajel#readme",
   "dependencies": {
     "getopts": "^2.2.5",
-    "globby": "^11.0.1",
     "install": "^0.13.0",
     "js-yaml": "^3.13.1",
     "passprint": "0.0.1",

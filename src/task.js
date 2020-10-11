@@ -82,9 +82,6 @@ class Task {
     if (this._deps === null || this._deps === undefined) {
       return undefined
     }
-    // if (!this._deps.filter) {
-    //  throw new Error('Deps should be an array in\n' + this.toString())
-    // }
     for (let i = 0; i < this._deps.length; ++i) {
       const fromPattern = new Percent(this._deps[i])
       if (fromPattern.hasMatch()) {

@@ -45,7 +45,7 @@ module.exports = async (bajelfile) => {
 
   // Split bajelfile into variables and tasks
   const tasks = new Tasks(bajelfile, tConsole)
-  const variables = await Variables(bajelfile)
+  const variables = new Variables(bajelfile)
 
   if (tasks.explicitTargets().length === 0) {
     const targetsStr = JSON.stringify(tasks.targets())

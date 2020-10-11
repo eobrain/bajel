@@ -7,7 +7,7 @@ deps = ["%.c", "hellomake.h"]
 exec = "$(CC) -c -o $@ $< $(CFLAGS)"
 
 [hellomake]
-deps = ["hellomake.o", "hellofunc.o"]
+deps = "$(OBJ)"
 exec = "$(CC) -o $@ $+ $(CFLAGS)"
 
 [clean]

@@ -61,17 +61,3 @@ test('recursive', async t => {
   t.deepEqual(stderr, 'Problem expanding variables: Error: Recursive definition of aaa.\n')
   t.deepEqual(code, 1)
 })
-
-test('glob', async t => {
-  const [code, stdout, stderr] = await build({
-    glob: ['LIC*'],
-    foo: {
-      deps: ['$(glob)'],
-      exec: ': $(glob)'
-    }
-  })
-
-  t.deepEqual(stderr, '')
-  t.deepEqual(stdout, ': LICENSE\n')
-  t.deepEqual(code, 0)
-})
