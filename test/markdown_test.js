@@ -4,7 +4,7 @@ const { writeTmpFile } = require('./_test_helper.js')
 // const { pp } = require('passprint')
 
 test('colby', async t => {
-  const bajelfile = await markdown('demo/colby/md/build.md')
+  const bajelfile = await markdown('demo/colby/md/BUILD.md')
 
   const expected = {
     '%.o': {

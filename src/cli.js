@@ -9,62 +9,30 @@ const toml = externalRequire('toml')
 const semver = externalRequire('semver')
 // const { pp } = require('passprint')
 
-const main = async () => {
-  const prefix = process.cwd() + '/build.'
-
-  const readIfExists = suffix => {
-    const path = prefix + suffix
-    return [
-      fs.existsSync(path) ? fs.readFileSync(path, 'utf8') : undefined,
-      path
-    ]
+const yamlLoad = yamlPath => {
+  const yamlText = fs.readFileSync(yamlPath, 'utf8')
+  if (yamlText) {
+    try {
+      return yaml.safeLoad(yamlText)
+    } catch (e) {
+      throw new Error(`${yamlPath}:${e.mark.line}:${e.mark.column} ${e.message}`)
+    }
   }
+}
 
-  const bajelfile = async () => {
-    const cjsPath = prefix + 'cjs'
-    if (fs.existsSync(cjsPath)) {
-      try {
-        return require(cjsPath)
-      } catch (e) {
-        e.readingFile = cjsPath
-        throw e
-      }
-    }
-    const mjsPath = prefix + 'mjs'
-    if (fs.existsSync(mjsPath)) {
-      const VERSION_REQUIREMENT = '>=13.2.0'
-      if (!semver.satisfies(process.version, VERSION_REQUIREMENT)) {
-        throw new Error(`Need Node ${VERSION_REQUIREMENT} to use .mjs files (ES6 modules). Current version is ${process.version}.`)
-      }
+const loads = {
 
-      try {
-        return (await import(mjsPath)).default
-      } catch (e) {
-        e.readingFile = mjsPath
-        throw e
-      }
+  cjs: async cjsPath => {
+    try {
+      return require(cjsPath)
+    } catch (e) {
+      e.readingFile = cjsPath
+      throw e
     }
-    const mdPath = prefix + 'md'
-    if (fs.existsSync(mdPath)) {
-      try {
-        return (await markdown(mdPath))
-      } catch (e) {
-        e.readingFile = mdPath
-        throw e
-      }
-    }
-    let [yamlText, yamlPath] = readIfExists('yaml')
-    if (!yamlText) {
-      [yamlText, yamlPath] = readIfExists('yml')
-    }
-    if (yamlText) {
-      try {
-        return yaml.safeLoad(yamlText)
-      } catch (e) {
-        throw new Error(`${yamlPath}:${e.mark.line}:${e.mark.column} ${e.message}`)
-      }
-    }
-    const [jsonText, jsonPath] = readIfExists('json')
+  },
+
+  json: async jsonPath => {
+    const jsonText = fs.readFileSync(jsonPath, 'utf8')
     if (jsonText) {
       try {
         return JSON.parse(jsonText)
@@ -73,7 +41,33 @@ const main = async () => {
         throw e
       }
     }
-    const [tomlText, tomlPath] = readIfExists('toml')
+  },
+
+  md: async mdPath => {
+    try {
+      return (await markdown(mdPath))
+    } catch (e) {
+      e.readingFile = mdPath
+      throw e
+    }
+  },
+
+  mjs: async mjsPath => {
+    const VERSION_REQUIREMENT = '>=13.2.0'
+    if (!semver.satisfies(process.version, VERSION_REQUIREMENT)) {
+      throw new Error(`Need Node ${VERSION_REQUIREMENT} to use .mjs files (ES6 modules). Current version is ${process.version}.`)
+    }
+
+    try {
+      return (await import(mjsPath)).default
+    } catch (e) {
+      e.readingFile = mjsPath
+      throw e
+    }
+  },
+
+  toml: async tomlPath => {
+    const tomlText = fs.readFileSync(tomlPath, 'utf8')
     if (tomlText) {
       try {
         return toml.parse(tomlText)
@@ -81,11 +75,42 @@ const main = async () => {
         throw new Error(`${tomlPath}:${e.line}:${e.column} ${e.message}`)
       }
     }
-    throw new Error('ERROR: No build file.')
+  },
+
+  yaml: yamlLoad,
+  yml: yamlLoad
+}
+
+const main = async () => {
+  const prefix = process.cwd() + '/BUILD.'
+  const prefixAlt = process.cwd() + '/build.'
+
+  const buildFiles = []
+  let load
+  for (const suffix in loads) {
+    const path = prefix + suffix
+    if (fs.existsSync(path)) {
+      load = loads[suffix]
+      buildFiles.push(path)
+    }
+    const pathAlt = prefixAlt + suffix
+    if (fs.existsSync(pathAlt)) {
+      load = loads[suffix]
+      buildFiles.push(pathAlt)
+      console.warn(`Using deprecated file name "${pathAlt}"`)
+      console.warn(`         Preferred name is "${path}"`)
+    }
   }
 
   try {
-    const [code] = await build(await bajelfile())
+    if (buildFiles.length > 1) {
+      throw new Error(`Duplicate build files:\n${buildFiles.join('\n')}`)
+    }
+    if (buildFiles.length === 0) {
+      throw new Error('ERROR: No build file.')
+    }
+
+    const [code] = await build(await load(buildFiles[0]))
     return code
   } catch (e) {
     const fileMessage = e.readingFile ? ` reading file ${e.readingFile}` : ''
