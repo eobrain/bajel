@@ -91,6 +91,49 @@ test.serial('missing build', async t => {
   })
 })
 
+test.serial('duplicate build', async t => {
+  const subDir = Math.random()
+  const [code, stdout, stderr] = await build({
+    bad: {
+      exec: `
+      mkdir ${subDir}
+      cd ${subDir}
+      touch BUILD.toml
+      touch BUILD.yaml
+      ../src/cli.js
+      `
+    }
+  })
+  t.regex(outFilter(stdout + stderr), /ERROR: Duplicate build files/)
+  t.deepEqual(1, code)
+  await build({
+    cleanup: {
+      exec: `rm -r ${subDir}`
+    }
+  })
+})
+
+test.serial('deprecated lower case build file name', async t => {
+  const subDir = Math.random()
+  const [code, stdout, stderr] = await build({
+    bad: {
+      exec: `
+      mkdir ${subDir}
+      cd ${subDir}
+      touch build.toml
+      ../src/cli.js
+      `
+    }
+  })
+  t.regex(outFilter(stdout + stderr), /Using deprecated file name /)
+  t.deepEqual(1, code)
+  await build({
+    cleanup: {
+      exec: `rm -r ${subDir}`
+    }
+  })
+})
+
 test.serial('cjs compile error', async t => {
   const subDir = Math.random()
   const [code, stdout, stderr] = await build({
@@ -98,7 +141,7 @@ test.serial('cjs compile error', async t => {
       exec: `
       mkdir ${subDir}
       cd ${subDir}
-      echo 'this will cause a compile error' > build.cjs
+      echo 'this will cause a compile error' > BUILD.cjs
       ../src/cli.js
       `
     }
@@ -127,7 +170,7 @@ test.serial('mjs compile error', async t => {
       exec: `
       mkdir ${subDir}
       cd ${subDir}
-      echo 'this will cause a compile error' > build.mjs
+      echo 'this will cause a compile error' > BUILD.mjs
       ../src/cli.js
       `
     }
@@ -156,7 +199,7 @@ test.serial('md has no targets', async t => {
       exec: `
       mkdir ${subDir}
       cd ${subDir}
-      echo '' > build.md
+      echo '' > BUILD.md
       ../src/cli.js
       `
     }
@@ -177,7 +220,7 @@ test.serial('yaml no explicit targets in', async t => {
       exec: `
       mkdir ${subDir}
       cd ${subDir}
-      echo 'this is valid yaml, seemingly' > build.yaml
+      echo 'this is valid yaml, seemingly' > BUILD.yaml
       ../src/cli.js
       `
     }
@@ -198,8 +241,8 @@ test.serial('yaml compile error', async t => {
       exec: `
       mkdir ${subDir}
       cd ${subDir}
-      echo 'foo:' > build.yaml
-      echo 'lack of indent should cause a compile error' >> build.yaml
+      echo 'foo:' > BUILD.yaml
+      echo 'lack of indent should cause a compile error' >> BUILD.yaml
       ../src/cli.js
       `
     }
@@ -220,7 +263,7 @@ test.serial('json compile error', async t => {
       exec: `
       mkdir ${subDir}
       cd ${subDir}
-      echo 'this will cause a compile error' > build.json
+      echo 'this will cause a compile error' > BUILD.json
       ../src/cli.js
       `
     }
@@ -241,7 +284,7 @@ test.serial('toml compile error', async t => {
       exec: `
       mkdir ${subDir}
       cd ${subDir}
-      echo 'this will cause a compile error' > build.toml
+      echo 'this will cause a compile error' > BUILD.toml
       ../src/cli.js
       `
     }

@@ -59,19 +59,19 @@ actually executing them.
 
 The build file must be one of the following names:
 
-* `build.toml`
-* `build.yaml` or `build.yml`
-* `build.json`
-* `build.cjs` (JavaScript, as a classic Node-JS module)
-* `build.mjs` (JavaScript, as a new-style ES6 module -- Node version 13.2.0 or later)
-* `build.md`
+* `BUILD.toml`
+* `BUILD.yaml` or `BUILD.yml`
+* `BUILD.json`
+* `BUILD.cjs` (JavaScript, as a classic Node-JS module)
+* `BUILD.mjs` (JavaScript, as a new-style ES6 module -- Node version 13.2.0 or later)
+* `BUILD.md`
 
 All these different languages are alternate syntaxes of specifying the same
 underlying build file structure, as shown by the following examples (based on a [makefile example][2]), each of which specify the same thing.
 
 ## Examples
 
-### build.toml
+### BUILD.toml
 
 ```toml
 CC = "gcc"
@@ -90,7 +90,7 @@ exec = "$(CC) -o $@ $+ $(CFLAGS)"
 exec = "rm -f hellomake $(OBJ)"
 ```
 
-### build.yaml
+### BUILD.yaml
 
 ```yaml
 CC: gcc
@@ -115,7 +115,7 @@ clean:
   exec: rm -f hellomake $(OBJ)
 ```
 
-### build.json
+### BUILD.json
 
 ```json
 {
@@ -145,7 +145,7 @@ clean:
 }
 ```
 
-### build.cjs
+### BUILD.cjs
 
 (This JavaScript module format supported with all versions of Node.)
 
@@ -174,7 +174,7 @@ module.exports = {
 }
 ```
 
-### build.mjs
+### BUILD.mjs
 
 (This JavaScript module format is only supported if your version of Node is 13.2.0 or later.)
 
@@ -203,7 +203,7 @@ export default {
 }
 ```
 
-### build.md
+### BUILD.md
 
 <pre>
 # Markdown version of build file
@@ -233,14 +233,14 @@ rm -f hellomake hellomake.o hellofunc.o
 
 ### Real world examples
 
-* Diagmap's [build.toml][5] is a fairly straightforward build file in TOML
+* Diagmap's [BUILD.toml][5] is a fairly straightforward build file in TOML
   format. The only slightly tricky aspect is that it take advantage of the `%`
   wild card to create empty `.ok` files to indicate that the corresponding `.js`
   file has successfully passed the StandardJS linter.
-* Maxichrome's [build.toml][6] is another straightforward TOML build file.
-* The [build.cjs][4] for a blog uses JavaScript variables, but it is otherwise
+* Maxichrome's [BUILD.toml][6] is another straightforward TOML build file.
+* The [BUILD.cjs][4] for a blog uses JavaScript variables, but it is otherwise
   fairly simple.
-* Mergi's [build.mjs][7] is a fairly complex build file which uses the power of
+* Mergi's [BUILD.mjs][7] is a fairly complex build file which uses the power of
   JavaScript to remove duplication by refactoring out common elements. For
   example it extensively uses the `...` spread operator to insert sub arrays
   into the `deps` arrays and to insert new dynamically generated targets into
@@ -350,8 +350,8 @@ http://www.eclipse.org/legal/epl-v10.html
 [1]: bajel.jpg
 [2]: http://www.cs.colby.edu/maxwell/courses/tutorials/maketutor/
 [3]: https://github.com/egoist/maid
-[4]: https://github.com/eobrain/webhome/blob/master/build.cjs
-[5]: https://github.com/eobrain/diagmap/blob/master/build.toml
-[6]: https://github.com/eobrain/maxichrome/blob/master/build.toml
-[7]: https://github.com/eobrain/mergi/blob/master/build.mjs
+[4]: https://github.com/eobrain/webhome/blob/master/BUILD.cjs
+[5]: https://github.com/eobrain/diagmap/blob/master/BUILD.toml
+[6]: https://github.com/eobrain/maxichrome/blob/master/BUILD.toml
+[7]: https://github.com/eobrain/mergi/blob/master/BUILD.mjs
 [8]: https://eamonn.org/programming/2020/05/22/bajel.html
