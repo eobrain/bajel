@@ -4,3 +4,6 @@ test/colby/hellofunc.o
 test/colby/hellomake.o
 /coverage
 /.nyc_output
+/bajel-linux
+/bajel-macos
+/bajel-win.exe
