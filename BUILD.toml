@@ -1,7 +1,11 @@
 #!src/cli.js default
 
 [default]
+deps=["bajel.linux"]
+
+["bajel.linux"]
 deps=["check", "test"]
+exec="npx pkg ."
 
 [test]
 exec="npx ava"
