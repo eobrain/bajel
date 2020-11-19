@@ -10,7 +10,7 @@ const Graph = require('./graph.js') // eslint-disable-line no-unused-vars
 class Task {
   /**
    * @param {string} target
-   * @param {!{ deps:?Array<string>, exec:?string, call }} task
+   * @param {!{ deps:(?Array<string>|string), exec:?string, call }} task
    */
   constructor (target, { deps, exec, call }) {
     this._target = target
@@ -30,7 +30,7 @@ class Task {
         this._deps = this._deps.map(dep => variables.interpolation(dep))
       } else {
         // deps is variable
-        this._deps = variables.interpolationAsArray(this._deps)
+        this._deps = variables.interpolationAsArray(/** @type {string} */(this._deps))
       }
     }
     if (this._exec && this._exec.replace) {
@@ -142,6 +142,7 @@ class Task {
       return { callHappened: true, result: '** dry run **' }
     }
     const deps = this._deps || []
+    /** @type {Object.<string, string>} */
     const iterableDepResults = deps.map(dep => depResults[dep])
     deps.forEach((dep, i) => {
       if (depResults[dep]) {

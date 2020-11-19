@@ -36,7 +36,7 @@ class Variables {
   /**
    * @param {string} string
    * @param {!Object} prev={}
-   * @return {array}
+   * @return {string}
    */
   interpolationAsArray (string, prev = {}) {
     string = string.trim()
