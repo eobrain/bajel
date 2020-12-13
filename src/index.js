@@ -6,6 +6,9 @@ const { timestamp } = require('./fs_util.js')
 const Variables = require('./variables.js')
 const Tasks = require('./tasks.js')
 const ago = require('./ago.js')
+const graphviz = require('./graphviz.js')
+const fs = externalRequire('fs')
+const { writeFile } = fs.promises
 // const { pp } = require('passprint')
 
 // const trace = x => console.log('trace:', x) || x
@@ -15,9 +18,10 @@ const ago = require('./ago.js')
  */
 module.exports = async (bajelfile) => {
   const options = getopts(process.argv.slice(2), {
-    boolean: ['d', 'h', 'n', 'p', 's', 't', 'T'],
+    boolean: ['d', 'g', 'h', 'n', 'p', 's', 't', 'T'],
     alias: {
       d: ['debug'],
+      g: ['graph'],
       h: ['help'],
       n: ['dry-run'],
       p: ['print'],
@@ -33,6 +37,7 @@ module.exports = async (bajelfile) => {
       Usage: bajel [options] [target]
       Options:
        -d, --debug            Explain how decisions are made.
+       -g, --graph            Write out dependency graphs BUILD.dot and BUILD-expanded.dot
        -h  --help             Show this help.
        -n, --dry-run          Don't execute the recipes.
        -s, --silent           Don't echo anything to stdout or stderr.
@@ -56,6 +61,15 @@ module.exports = async (bajelfile) => {
   if (options.t) {
     tConsole.log(tasks.explicitTargets().join(' '))
     return [0, tStdout(), tStderr()]
+  }
+
+  const writeGraph = async fileName => {
+    await writeFile(fileName, graphviz(bajelfile))
+    tConsole.log(`Wrote dependency graph "${fileName}"`)
+  }
+
+  if (options.g) {
+    await writeGraph('BUILD.dot')
   }
 
   const dryRun = options.n
@@ -87,6 +101,10 @@ module.exports = async (bajelfile) => {
   }
   if (options.T) {
     tConsole.log(tasks.targets().join(' '))
+    return [0, tStdout(), tStderr()]
+  }
+  if (options.g) {
+    await writeGraph('BUILD-expanded.dot')
     return [0, tStdout(), tStderr()]
   }
   if (options.p) {
