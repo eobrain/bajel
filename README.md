@@ -27,16 +27,36 @@ The article [Bajel, A Simple, Flexible Build and Scripting Tool for NPM][8] desc
 
 ## Installation
 
-```sh
-npm install --save-dev bajel
-```
+First check prerequisites by making sure that `npm -v` shows you have a working Node.js installation. If not  [install Node.js][9] (or if you want the flexibilty of switching between multiple versions of Node.js [install NVM][10])
+
+Choose one of these three options
+
+1. Install as a global utility
+
+   ```sh
+   npm install -g bajel
+   ```
+
+2. Install as a global utility as root (if above gives `permission denied` error).
+
+   ```sh
+   sudo npm install -g bajel
+   ```
+
+3. Install in the current NPM project (if you only want to use Bajel with Node).
+
+   ```sh
+   npm install --save-dev bajel
+   ```
+
+   Note in this case you will have to replace all the `bajel something` example commands below with `npx bajel something`.
 
 ## Usage
 
 The command
 
 ```sh
-npx bajel
+bajel
 ```
 
 will build the default target in build file in the current directory.
@@ -45,13 +65,13 @@ The default target is the first target in the file that is not a file pattern
 (with a `%` wildcard).
 
 ```sh
-npx bajel foo
+bajel foo
 ```
 
 Will build target `foo`.
 
 ```sh
-npx bajel -n
+bajel -n
 ```
 
 Will do a dry run, printing out the commands that it would execute, but not
@@ -355,3 +375,5 @@ http://www.eclipse.org/legal/epl-v10.html
 [6]: https://github.com/eobrain/maxichrome/blob/master/BUILD.toml
 [7]: https://github.com/eobrain/mergi/blob/master/BUILD.mjs
 [8]: https://eamonn.org/programming/2020/05/22/bajel.html
+[9]: https://nodejs.org/en/download/
+[10]: https://github.com/nvm-sh/nvm#install--update-script
