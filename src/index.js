@@ -13,8 +13,8 @@ const ago = require('./ago.js')
 /**
  * @returns [errorCode, stdoutString, stderrString]
  */
-module.exports = async (bajelfile) => {
-  const options = getopts(process.argv.slice(2), {
+module.exports = async (bajelfile, argv = process.argv) => {
+  const options = getopts(argv.slice(2), {
     boolean: ['d', 'h', 'n', 'p', 's', 't', 'T'],
     alias: {
       d: ['debug'],
@@ -77,7 +77,7 @@ module.exports = async (bajelfile) => {
 
   try {
     // Phase 2: Expand percents
-    while (tasks.expandDeps(tConsole)) { }
+    while (tasks.expandDeps(tConsole)) { /** do nothing */ }
   } catch (e) {
     tConsole.error('Problem expanding percents: ' + e)
     if (options.p) {
