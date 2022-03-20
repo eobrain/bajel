@@ -228,9 +228,9 @@ module.exports = class {
       debugOut(() => !task.hasRecipe()
         ? 'has no recipe'
         : (lastDepsTime === 0
-          ? 'exists and there are no deps so ignoring recipe'
-          : 'is more recent than the most recent dep so ignoring recipe'
-        )
+            ? 'exists and there are no deps so ignoring recipe'
+            : 'is more recent than the most recent dep so ignoring recipe'
+          )
       )
     }
     if (!outResult) {
